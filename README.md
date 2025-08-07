@@ -1,19 +1,32 @@
-# README
+## 使用说明
 
-## About
+表情包文件结构如下
 
-This is the official Wails Vue-TS template.
+```
+├── 表情包主目录
+│   ├── 表情包文件夹1
+│   │   ├── 图片1.png
+│   │   ├── 图片2.png
+│   │   ├── ...
+│   ├── 表情包文件夹2
+│   │   ├── 图片1.png
+│   │   ├── 图片2.png
+│   │   ├── ...
+│   ├── ...
+```
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+支持的图片类型
+ - .jpg
+ - .jpeg
+ - .png
+ - .gif
+ - .bmp
+ - .webp
 
-## Live Development
+### 注意事项
+- 图片名称不能包含特殊字符，如 `%}{&}` 等
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+## 开发 && 打包
+运行 `wails dev` 命令启动项目
 
-## Building
-
-To build a redistributable, production mode package, use `wails build`.
+运行 `wails build` 命令打包项目

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -24,19 +25,15 @@ func (m *MemeFile) SetContext(ctx context.Context) {
 	m.ctx = ctx
 }
 
-
 func (m *MemeFile) Hello() string {
 	fmt.Println("hello")
 	return "hello"
 }
 
-
-
 var (
 	// 存放图片链接的数据管道
 	imageUrls []string
 )
-
 
 // 返回打开选择的文件路径
 func (m *MemeFile) OpenFileDlg() []string {
@@ -49,7 +46,6 @@ func (m *MemeFile) OpenFileDlg() []string {
 	log.Println(filePath)
 	return filePath
 }
-
 
 // 请选择meme根目录
 func (m *MemeFile) SelectRootDir() string {
@@ -70,21 +66,21 @@ func (m *MemeFile) GetDirs(path string) []string {
 		log.Println("读取目录失败:", err.Error())
 		return nil
 	}
-	
+
 	var dirs []string
 	for _, entry := range entries {
 		if entry.IsDir() {
 			dirs = append(dirs, entry.Name())
 		}
 	}
-	
+
 	return dirs
 }
 
 // 传入一个目录并返回改目录下的图片
 func (m *MemeFile) GetImages(path string) []string {
 	entries, err := os.ReadDir(path)
-	if err!= nil {
+	if err != nil {
 		log.Println("读取目录失败:", err.Error())
 		return nil
 	}
@@ -110,9 +106,68 @@ func isImageFile(fileName string) bool {
 	return strings.HasSuffix(fileName, ".jpg") ||
 		strings.HasSuffix(fileName, ".jpeg") ||
 		strings.HasSuffix(fileName, ".png") ||
-		strings.HasSuffix(fileName, ".gif") //||
-		// strings.HasSuffix(fileName, ".bmp") ||
-		// strings.HasSuffix(fileName, ".webp")
+		strings.HasSuffix(fileName, ".gif") ||
+        strings.HasSuffix(fileName, ".bmp") ||
+        strings.HasSuffix(fileName, ".webp")
 }
 
+type MemeInfo struct {
+	Name      string
+	Code      string
+	ParentPath string
+	Icon      string
+	Memes     []string
+}
 
+// 生成所有meme的路径
+func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
+	var loadedMemes []MemeInfo
+
+	// 读取根目录下的所有条目
+	entries, err := os.ReadDir(rootPath)
+	if err != nil {
+		log.Println("读取根目录失败:", err.Error())
+		return nil
+	}
+
+	// 遍历根目录下的每个条目
+	for _, entry := range entries {
+		// 只处理子文件夹
+		if entry.IsDir() {
+			// 子文件夹名称
+			dirName := entry.Name()
+			// 子文件夹完整路径
+			dirPath := filepath.Join(rootPath, dirName)
+
+			// 获取子文件夹内的所有图片文件名（使用已有GetImages方法）
+			imageNames := m.GetImages(dirPath)
+			if imageNames == nil {
+				continue // 跳过无图片的文件夹
+			}
+
+			// 生成图片完整路径列表（根据前端需求可能需要调整路径格式）
+			var memeImages []string
+			for _, imgName := range imageNames {
+				memeImages = append(memeImages, imgName)
+			}
+
+            // 检查是否有图标
+            if len(memeImages) <= 0 {
+                continue // 跳过无图片的文件夹
+            }
+
+			// 构造MemeInfo对象（根据你的需求调整字段填充逻辑）
+			memeInfo := MemeInfo{
+				Name:      dirName,    // 文件夹名作为名称
+				Code:      dirName,    // 文件夹名作为唯一标识（可根据需要修改）
+				ParentPath: dirPath,   // 父文件夹路径
+				Icon:  memeImages[0],         // 可选：如果需要图标，可设置为memeImages[0]（需检查长度）
+				Memes: memeImages, // 图片完整路径列表
+			}
+
+			loadedMemes = append(loadedMemes, memeInfo)
+		}
+	}
+
+	return loadedMemes
+}
