@@ -33,16 +33,18 @@ const refreshMemes = async () => {
     <div class="tab-bar-inner">
       <button class="setting-btn" @click="openSetting()">设置</button>
       <button class="refresh-btn" @click="refreshMemes()">刷新</button>
-      <div
-        v-for="meme in store.allMemesPath"
-        :key="meme.Code"
-        @click="handleTabClick(meme.Code)"
-        :class="clsx(
-           'meme-item',
-           {'meme-item-action':meme.Code === store.tabCurrent}
+      <div class="tab-list">
+        <div
+          v-for="meme in store.allMemesPath"
+          :key="meme.Code"
+          @click="handleTabClick(meme.Code)"
+          :class="clsx(
+           'tab-item',
+           {'tab-item-action':meme.Code === store.tabCurrent}
          )"
-      >
-        <img :src="joinShowImgPath(meme.ParentPath,meme.Icon)" :alt="meme.Code"/>
+        >
+          <img :src="joinShowImgPath(meme.ParentPath,meme.Icon)" :alt="meme.Code"/>
+        </div>
       </div>
     </div>
     <MeSetting v-if="isShowSetting" :closeCall="closeSetting"/>
@@ -67,7 +69,6 @@ const refreshMemes = async () => {
   display: flex;
   gap: .5rem;
   padding: .5rem;
-  overflow: auto;
 }
 
 .setting-btn,
@@ -78,21 +79,29 @@ const refreshMemes = async () => {
   cursor: pointer;
 }
 
-.meme-item {
+.tab-list {
+  display: flex;
+  gap: .5rem;
+  overflow-x: auto;
+}
+
+.tab-list .tab-item {
   background-color: cadetblue;
   cursor: pointer;
   height: 100%;
   align-content: center;
   border-radius: .125rem;
   padding: .25rem;
+  flex: none;
 }
 
-.meme-item-action {
+.tab-list .tab-item-action {
   background-color: aqua;
 }
 
-.meme-item img {
-  height: 100%;
+.tab-list .tab-item img {
+  height: 2.5rem;
+  max-width: 100%;
   /* 禁止拖拽 */
   user-drag: none;
   -webkit-user-drag: none;

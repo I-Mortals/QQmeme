@@ -139,13 +139,13 @@ func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
 			// 子文件夹完整路径
 			dirPath := filepath.Join(rootPath, dirName)
 
-			// 获取子文件夹内的所有图片文件名（使用已有GetImages方法）
+			// 获取子文件夹内的所有图片文件名
 			imageNames := m.GetImages(dirPath)
 			if imageNames == nil {
 				continue // 跳过无图片的文件夹
 			}
 
-			// 生成图片完整路径列表（根据前端需求可能需要调整路径格式）
+			// 生成图片完整路径列表
 			var memeImages []string
 			for _, imgName := range imageNames {
 				memeImages = append(memeImages, imgName)
@@ -156,12 +156,11 @@ func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
                 continue // 跳过无图片的文件夹
             }
 
-			// 构造MemeInfo对象（根据你的需求调整字段填充逻辑）
 			memeInfo := MemeInfo{
 				Name:      dirName,    // 文件夹名作为名称
 				Code:      dirName,    // 文件夹名作为唯一标识（可根据需要修改）
 				ParentPath: dirPath,   // 父文件夹路径
-				Icon:  memeImages[0],         // 可选：如果需要图标，可设置为memeImages[0]（需检查长度）
+				Icon:  memeImages[0],  // 图标
 				Memes: memeImages, // 图片完整路径列表
 			}
 

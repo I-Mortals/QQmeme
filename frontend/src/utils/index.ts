@@ -16,7 +16,6 @@ export const joinShowImgPath = (path: string, dir: string) => {
     // 提取盘符并重新格式化路径
     const drive = path.charAt(0)
     const restPath = path.substring(2) // 跳过盘符和冒号
-    console.log(drive, restPath)
     
     return '\\' + drive + restPath + '\\' + dir
   }
