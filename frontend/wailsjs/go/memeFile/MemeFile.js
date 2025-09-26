@@ -29,3 +29,11 @@ export function SelectRootDir() {
 export function SetContext(arg1) {
   return window['go']['memeFile']['MemeFile']['SetContext'](arg1);
 }
+
+export function WriteFileToClipboard(arg1) {
+  return window['go']['memeFile']['MemeFile']['WriteFileToClipboard'](arg1);
+}
+
+export function WriteGIFToClipboard(arg1) {
+  return window['go']['memeFile']['MemeFile']['WriteGIFToClipboard'](arg1);
+}

@@ -1,11 +1,45 @@
 @import "normalize.css";
 
+:root {
+  /* 主题色变量 - RGB格式 */
+  --theme-primary: 110,71,148;
+}
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
-  background-color: antiquewhite;
+  background-color: #fff;
   color: white;
 }
 

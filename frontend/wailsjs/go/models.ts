@@ -1,11 +1,11 @@
 export namespace memeFile {
 	
 	export class MemeInfo {
-	    Name: string;
-	    Code: string;
-	    ParentPath: string;
-	    Icon: string;
-	    Memes: string[];
+	    name: string;
+	    code: string;
+	    parentPath: string;
+	    icon: string;
+	    memes: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new MemeInfo(source);
@@ -13,11 +13,11 @@ export namespace memeFile {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.Name = source["Name"];
-	        this.Code = source["Code"];
-	        this.ParentPath = source["ParentPath"];
-	        this.Icon = source["Icon"];
-	        this.Memes = source["Memes"];
+	        this.name = source["name"];
+	        this.code = source["code"];
+	        this.parentPath = source["parentPath"];
+	        this.icon = source["icon"];
+	        this.memes = source["memes"];
 	    }
 	}
 
