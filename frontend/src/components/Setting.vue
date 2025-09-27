@@ -3,6 +3,7 @@ import { defineProps, withDefaults } from 'vue'
 import { GenerateAllMemePath, SelectRootDir } from '../../wailsjs/go/memeFile/memeFile'
 import { store } from '../store'
 import Modal from './Modal.vue'
+import SetColor from './SetColor.vue'
 
 interface SettingProps {
   visible?: boolean;
@@ -70,6 +71,16 @@ const clearCache = () => {
           </button>
         </div>
       </div>
+
+      <div class="setting-section">
+        <h3 class="section-title">主题设置</h3>
+        <div class="setting-item">
+          <SetColor></SetColor>
+        </div>
+      </div>
+
+
+
     </div>
     
     <template #footer>

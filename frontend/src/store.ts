@@ -23,10 +23,15 @@ export const store = reactive({
   },
   // 主题色
   themeColor: '110,71,148', // 默认蓝色
+  themeBackgroundColor: '255,255,255',
   setThemeColor(color: string) {
     this.themeColor = color
     // 更新CSS变量
     document.documentElement.style.setProperty('--theme-primary', color)
+  },
+  setThemeBackgroundColor(color: string) {
+    this.themeBackgroundColor = color
+    document.documentElement.style.setProperty('--theme-background', color)
   },
   // Toast弹窗
   toasts: [] as ToastItem[],

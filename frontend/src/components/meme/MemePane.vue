@@ -67,7 +67,7 @@ const handleClick = async (image: string) => {
   justify-content: start;
   align-content: start;
   gap: 1.25rem;
-  background: #f8fafc;
+  background: rgb(var(--theme-background));
   margin-bottom: 5rem;
   width: 100%;
   padding: 1.5rem;
