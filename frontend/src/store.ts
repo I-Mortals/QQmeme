@@ -22,21 +22,32 @@ export const store = reactive({
     this.allMemesPath = []
   },
   // 主题色
-  themeColor: '110,71,148', // 默认蓝色
-  themeBackgroundColor: '255,255,255',
+  themeColor: '110,71,148,1', // 默认紫色，因为紫色更有韵味，格式为 r,g,b,a
+  themeBackgroundColor: '255,255,255,1',
   setThemeColor(color: string) {
     this.themeColor = color
-    // 更新CSS变量
-    document.documentElement.style.setProperty('--theme-primary', color)
+    // 更新CSS变量，支持带透明度的颜色
+    if (color.includes(',')) {
+      const [r, g, b, a = '1'] = color.split(',')
+      document.documentElement.style.setProperty('--theme-primary', `rgba(${r},${g},${b},${a})`)
+    } else {
+      document.documentElement.style.setProperty('--theme-primary', color)
+    }
   },
   setThemeBackgroundColor(color: string) {
     this.themeBackgroundColor = color
-    document.documentElement.style.setProperty('--theme-background', color)
+    // 更新CSS变量，支持带透明度的颜色
+    if (color.includes(',')) {
+      const [r, g, b, a = '1'] = color.split(',')
+      document.documentElement.style.setProperty('--theme-background', `rgba(${r},${g},${b},${a})`)
+    } else {
+      document.documentElement.style.setProperty('--theme-background', color)
+    }
   },
   // Toast弹窗
   toasts: [] as ToastItem[],
   showToast(message: string, type: ToastType = 'success') {
-    const id = Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    const id = Math.random().toString(36).substring(2, 15)
     this.toasts.push({
       id,
       message,
@@ -89,6 +100,17 @@ watch(() => store.themeColor, (newValue) => {
   }
 })
 
+watch(() => store.themeBackgroundColor, (newValue) => {
+  if (window) {
+    window.localStorage.setItem('themeBackgroundColor', newValue)
+    storeOn.forEach((cb, key) => {
+      if (key === 'themeBackgroundColor') {
+        cb(newValue)
+      }
+    })
+  }
+})
+
 // init
 export function initializeStoreFromCache() {
   if (window) {
@@ -115,6 +137,15 @@ export function initializeStoreFromCache() {
     } else {
       // 初始化默认主题色
       store.setThemeColor(store.themeColor)
+    }
+    
+    // 恢复 themeBackgroundColor
+    const cachedThemeBackgroundColor = window.localStorage.getItem('themeBackgroundColor')
+    if (cachedThemeBackgroundColor) {
+      store.setThemeBackgroundColor(cachedThemeBackgroundColor)
+    } else {
+      // 恢复默认主题色
+      store.setThemeBackgroundColor(store.themeBackgroundColor)
     }
   }
 }

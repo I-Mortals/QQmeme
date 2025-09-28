@@ -59,7 +59,7 @@ const refreshMemes = async () => {
   left: 0;
   width: 100%;
   height: 5rem;
-  background: rgb(var(--theme-primary));
+  background: var(--theme-primary);
   backdrop-filter: blur(20px);
   z-index: 1000;
   box-shadow:
@@ -170,7 +170,6 @@ const refreshMemes = async () => {
   transform: scale(1.08);
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .tab-bar {
     height: 5rem;

@@ -1,12 +1,10 @@
 @import "normalize.css";
 
 :root {
-  /* 主题色变量 - RGB格式 */
-  --theme-primary: 110,71,148;
-  /* 主题背景色变量 - RGB格式 */
-  --theme-background: 255,255,255;
-  /* 主题文字色变量 - RGB格式 */
-  --theme-text: 31,41,55;
+  /* 主题色变量 - RGBA格式 */
+  --theme-primary: rgba(110,71,148,1);
+  /* 主题背景色变量 - RGBA格式 */
+  --theme-background: rgba(255,255,255,1);
 }
 
 /* 全局滚动条样式 */

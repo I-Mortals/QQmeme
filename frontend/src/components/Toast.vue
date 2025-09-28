@@ -8,10 +8,10 @@
         :class="`toast-${toast.type}`"
       >
         <div class="toast-icon" :class="`toast-icon-${toast.type}`">
-          <IconSuccess v-if="toast.type === 'success'" />
-          <IconClose v-else-if="toast.type === 'error'" />
-          <IconWarning v-else-if="toast.type === 'warning'" />
-          <IconInfo v-else-if="toast.type === 'info'" />
+          <Icon icon="lucide:check" :width="12" :height="12" v-if="toast.type === 'success'" />
+          <Icon icon="lucide:x" :width="12" :height="12" v-else-if="toast.type === 'error'" />
+          <Icon icon="lucide:triangle-alert" :width="12" :height="12" v-else-if="toast.type === 'warning'" />
+          <Icon icon="lucide:info" :width="12" :height="12" v-else-if="toast.type === 'info'" />
         </div>
         <div class="toast-message">{{ toast.message }}</div>
       </div>
@@ -21,10 +21,8 @@
 
 <script setup lang="ts">
 import { store } from '../store'
-import { IconSuccess, IconWarning, IconInfo } from './icons'
-import IconClose from './icons/IconClose.vue'
+import { Icon } from '@iconify/vue'
 
-// Toast type definition
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
 export interface ToastItem {
@@ -98,7 +96,6 @@ export interface ToastItem {
   overflow-wrap: break-word;
 }
 
-/* 动画效果 */
 .toast-enter-active {
   transition: all 0.3s ease-out;
 }

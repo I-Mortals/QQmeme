@@ -67,7 +67,7 @@ const handleClick = async (image: string) => {
   justify-content: start;
   align-content: start;
   gap: 1.25rem;
-  background: rgb(var(--theme-background));
+  background: var(--theme-background);
   margin-bottom: 5rem;
   width: 100%;
   padding: 1.5rem;
@@ -84,7 +84,7 @@ const handleClick = async (image: string) => {
   height: 1px;
   background: linear-gradient(90deg, 
     transparent 0%, 
-    rgba(var(--theme-primary), 0.2) 50%, 
+    color-mix(in srgb, var(--theme-primary) 20%, transparent) 50%, 
     transparent 100%);
 }
 
@@ -114,14 +114,13 @@ const handleClick = async (image: string) => {
 
 .meme-item img:hover {
   transform: translateY(-4px) scale(1.1);
-  border-color: rgba(var(--theme-primary), 0.2);
+  border-color: color-mix(in srgb, var(--theme-primary) 20%, transparent);
 }
 
 .meme-item:active img {
   transform: scale(0.98);
 }
 
-/* 响应式设计 */
 @media (max-width: 1200px) {
   .meme-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

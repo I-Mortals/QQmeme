@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { defineProps, defineEmits, onMounted, onUnmounted } from 'vue'
-import { IconClose } from './icons'
+import { onMounted, onUnmounted } from 'vue'
+import { Icon } from '@iconify/vue'
 
 interface ModalProps {
   visible: boolean
@@ -73,7 +73,7 @@ onUnmounted(() => {
               @click="handleClose"
               aria-label="关闭"
             >
-              <IconClose />
+              <Icon icon="lucide:x" :width="24" :height="24" />
             </button>
           </div>
 
@@ -115,20 +115,20 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background: radial-gradient(circle at center,
-    rgba(var(--theme-primary), 0.1) 0%,
+    color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%,
     transparent 70%);
   pointer-events: none;
 }
 
 .modal-container {
   background: white;
-  border-radius: 1.5rem;
+  border-radius: 1rem;
   box-shadow:
-    0 32px 64px rgba(0, 0, 0, 0.2),
-    0 16px 32px rgba(0, 0, 0, 0.1),
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 8px 16px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-height: 90vh;
+  max-height: none;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -145,34 +145,34 @@ onUnmounted(() => {
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(var(--theme-primary), 0.3) 50%,
+    color-mix(in srgb, var(--theme-primary) 30%, transparent) 50%,
     transparent 100%);
 }
 
 .modal-small {
-  max-width: 420px;
+  max-width: 360px;
 }
 
 .modal-medium {
-  max-width: 520px;
+  max-width: 480px;
 }
 
 .modal-large {
-  max-width: 720px;
+  max-width: 640px;
 }
 
 .modal-full {
   max-width: 95vw;
-  max-height: 95vh;
+  max-height: none;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 1.5rem 1.25rem;
+  padding: 1rem 1rem 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgb(var(--theme-primary));
+  background: var(--theme-primary);
   color: white;
   flex-shrink: 0;
   position: relative;
@@ -226,7 +226,7 @@ onUnmounted(() => {
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1rem;
   flex: 1;
   overflow-y: auto;
   background: #fafbfc;
@@ -234,8 +234,8 @@ onUnmounted(() => {
 
 
 .modal-footer {
-  padding: 1.25rem 1.5rem 1.5rem;
-  border-top: 1px solid rgba(var(--theme-primary), 0.1);
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 10%, transparent);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -253,7 +253,7 @@ onUnmounted(() => {
   height: 1px;
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(var(--theme-primary), 0.2) 50%,
+    color-mix(in srgb, var(--theme-primary) 20%, transparent) 50%,
     transparent 100%);
 }
 
@@ -303,7 +303,6 @@ onUnmounted(() => {
   backdrop-filter: blur(12px);
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .modal-overlay {
     padding: 1rem;

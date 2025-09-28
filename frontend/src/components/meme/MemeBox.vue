@@ -18,7 +18,6 @@ import MemePane from './MemePane.vue'
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  background: rgb(var(--theme-primary));
   position: relative;
   scroll-behavior: smooth;
 }
@@ -30,7 +29,7 @@ import MemePane from './MemePane.vue'
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
@@ -63,17 +62,16 @@ import MemePane from './MemePane.vue'
   opacity: 1;
 }
 
-/* 响应式滚动条 */
 @media (max-width: 768px) {
   .meme-box::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   .meme-box::-webkit-scrollbar-track {
     border-radius: 4px;
     margin: 4px 0;
   }
-  
+
   .meme-box::-webkit-scrollbar-thumb {
     border-radius: 4px;
     border-width: 1px;
@@ -84,7 +82,7 @@ import MemePane from './MemePane.vue'
   .meme-box::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .meme-box::after {
     right: 1px;
     width: 3px;
