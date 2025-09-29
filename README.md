@@ -1,7 +1,9 @@
 ## 使用说明
 
-* 表情包主目录路径：`C:\Users\用户名\Pictures\表情包主目录`(`Pictures`在我的电脑里中文的文件夹叫图片), 表情包主目录应当采用英文命名，如 `emoji` or `memes`，例子：`C:\Users\zhangsan\Pictures\memes`.
+* 将程序放在英文文件夹下，例：`D:\QQmeme\`。
+* 表情包主目录路径：`C:\Users\用户名\Pictures\表情包主目录`(`Pictures`在我的电脑里中文的文件夹叫图片), 表情包主目录应当采用英文命名，如 `emoji` or `memes`，例子：`C:\Users\zhangsan\Pictures\memes`。
 * 如果不按照如上路径存放表情包文件，软件可能不会正常工作。
+* 将表情包按照结构整理并放好，检查表情包文件名是否带有特殊符号。
 
 表情包文件结构如下
 
