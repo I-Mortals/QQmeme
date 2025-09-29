@@ -64,50 +64,28 @@ export const store = reactive({
   }
 })
 
-// TODO 监听store变化
-const storeOn = new Map<string, (value: any) => void[]>()
 
 watch(() => store.rootPath, (newValue) => {
-  if (window) {
+  if (window) {    
     window.localStorage.setItem('rootPath', newValue)
-    storeOn.forEach((cb, key) => {
-      if (key === 'rootPath') {
-        cb(newValue)
-      }
-    })
   }
 })
 
 watch(() => store.allMemesPath, (newValue) => {
   if (window) {
     window.localStorage.setItem('allMemesPath', JSON.stringify(newValue))
-    storeOn.forEach((cb, key) => {
-      if (key === 'allMemesPath') {
-        cb(newValue)
-      }
-    })
   }
-})
+},{deep: true})
 
 watch(() => store.themeColor, (newValue) => {
   if (window) {
     window.localStorage.setItem('themeColor', newValue)
-    storeOn.forEach((cb, key) => {
-      if (key === 'themeColor') {
-        cb(newValue)
-      }
-    })
   }
 })
 
 watch(() => store.themeBackgroundColor, (newValue) => {
   if (window) {
     window.localStorage.setItem('themeBackgroundColor', newValue)
-    storeOn.forEach((cb, key) => {
-      if (key === 'themeBackgroundColor') {
-        cb(newValue)
-      }
-    })
   }
 })
 

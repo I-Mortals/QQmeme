@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted, ImgHTMLAttributes } from 'vue'
 import { store } from '../store'
 import MeSetting from './Setting.vue'
 import { GenerateAllMemePath } from '../../wailsjs/go/memeFile/memeFile'
@@ -8,7 +8,12 @@ import { clsx } from 'clsx'
 
 const isShowSetting = ref(false)
 
+const topTabActive = ref('')
+const contextMenu = ref<HTMLElement>()
+
+
 const handleTabClick = (tab: string) => {
+
   store.handleTabClick(tab)
 }
 
@@ -24,6 +29,65 @@ const refreshMemes = async () => {
   store.allMemesPath = await GenerateAllMemePath(store.rootPath)
 }
 
+onMounted(async () => {
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // 阻止默认右键菜单
+    const currentElement = e.target as ImgHTMLAttributes;
+    if (currentElement?.id === 'MemeTabItem') {
+      const code = currentElement?.alt
+      topTabActive.value = code || ''
+      showCustomMenu(e.clientX, e.clientY, e.target as HTMLElement)
+    }
+  });
+  // 点击其他地方时隐藏菜单
+  document.addEventListener('click', () => {
+    hideCustomMenu();
+  });
+
+})
+
+// 显示自定义菜单
+const showCustomMenu = (x: number, y: number, element: HTMLElement) => {
+
+  if (!contextMenu.value) return
+  // 设置菜单位置
+
+
+  contextMenu.value.style.left = x + 'px';
+  contextMenu.value.style.top = 0 + 'px';
+
+  // 显示菜单
+  contextMenu.value.style.display = 'block';
+
+  // 防止菜单超出屏幕边界
+  const rect = contextMenu.value.getBoundingClientRect();
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+
+  if (rect.right > windowWidth) {
+    contextMenu.value.style.left = (x - rect.width) + 'px';
+  }
+
+}
+
+// 隐藏自定义菜单
+const hideCustomMenu = () => {
+  if (!contextMenu.value) return
+  contextMenu.value.style.display = 'none';
+}
+
+// 置顶
+const topTab = () => {
+  console.log(topTabActive.value);
+  if (!topTabActive.value) return
+  // 将code移动到数组的第一位
+  const index = store.allMemesPath.findIndex(item => item.code === topTabActive.value);
+  if (index !== -1) {
+    const item = store.allMemesPath.splice(index, 1)[0];
+    store.allMemesPath.unshift(item);
+  }
+}
+
 </script>
 
 
@@ -34,20 +98,21 @@ const refreshMemes = async () => {
       <button class="refresh-btn" @click="refreshMemes()">刷新</button>
 
       <div class="tab-list">
-        <div
-          v-for="meme in store.allMemesPath"
-          :key="meme.code"
-          @click="handleTabClick(meme.code)"
-          :class="clsx(
-           'tab-item',
-           {'tab-item-action':meme.code === store.tabCurrent}
-         )"
-        >
-          <img :src="joinShowImgPath(meme.parentPath, meme.icon)" :alt="meme.code"/>
+        <div v-for="meme in store.allMemesPath" :key="meme.code" @click="handleTabClick(meme.code)" :class="clsx(
+          'tab-item',
+          { 'tab-item-action': meme.code === store.tabCurrent }
+        )">
+          <img id="MemeTabItem" :src="joinShowImgPath(meme.parentPath, meme.icon)" :alt="meme.code" />
         </div>
       </div>
     </div>
-    <MeSetting :visible="isShowSetting" :closeCall="closeSetting"/>
+    <MeSetting :visible="isShowSetting" :closeCall="closeSetting" />
+    <!-- 自定义右键菜单 -->
+    <div ref="contextMenu" class="context-menu" id="contextMenu">
+      <div class="menu-item" @click="topTab">
+        <i>📌</i> 置顶
+      </div>
+    </div>
   </main>
 </template>
 
@@ -226,5 +291,55 @@ const refreshMemes = async () => {
     height: 2rem;
     width: 2rem;
   }
+}
+
+/* 自定义右键 */
+
+.context-menu {
+  position: absolute;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  /* width: 280px; */
+  z-index: 1;
+  display: none;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.menu-item {
+  padding: 6px 6px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-item i {
+  margin-right: 10px;
+  width: 10px;
+  text-align: center;
 }
 </style>
