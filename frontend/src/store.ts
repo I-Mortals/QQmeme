@@ -1,12 +1,44 @@
 import { reactive, watch } from 'vue'
-import type { ToastItem, ToastType } from './components/Toast.vue'
+import { GenerateAllMemePath } from '../wailsjs/go/memeFile/MemeFile'
+import { ToastItem, ToastType } from './components/Toast.vue'
+import {
+  ALL_MEMES_PATH_KEY,
+  BOT_TOKEN_KEY,
+  PROXY_ENABLED_KEY,
+  PROXY_URL_KEY,
+  ROOT_PATH_KEY,
+  STAR_MEMES_KEY,
+  THEME_BACKGROUND_COLOR_KEY,
+  THEME_COLOR_KEY
+} from './utils/common'
 
-type MemeInfoType = {
+interface ContextMenuItem {
+  icon: string
+  label: string
+  action: () => void
+  separator?: boolean
+}
+
+interface ContextMenuState {
+  visible: boolean
+  menuItems: ContextMenuItem[]
+  position: { x: number; y: number }
+}
+
+export type MemeTabItem = {
   name: string
   code: string
   parentPath: string
   icon: string
   memes: string[]
+  orderChanged?: boolean
+}
+
+export type StarMemeItem = {
+  id: string
+  fileName: string
+  fromFolder: string
+  addedAt: number
 }
 
 export const store = reactive({
@@ -15,18 +47,65 @@ export const store = reactive({
   handleTabClick(index: string) {
     this.tabCurrent = index
   },
+  // 强制刷新
+  forceRefreshKey: 0,
+  forceRefreshCurrentTab() {
+    this.forceRefreshKey++
+  },
   // meme目录
   rootPath: '',
-  allMemesPath: [] as MemeInfoType[],
+  allMemesPath: [] as MemeTabItem[],
+  tabOrderChanged: false,
   clearCache() {
     this.allMemesPath = []
+    this.starMemes = []
+  },
+  setMemeOrderChanged(memeCode: string, changed: boolean = true) {
+    const meme = this.allMemesPath.find(m => m.code === memeCode)
+    if (meme) {
+      meme.orderChanged = changed
+    }
+  },
+  setTabOrderChanged(changed: boolean = true) {
+    this.tabOrderChanged = changed
+  },
+  // 收藏夹
+  starMemes: [] as StarMemeItem[],
+  addToStarMemes(fileName: string, fromFolder: string) {
+    const id = Math.random().toString(36).substring(2, 15)
+
+    const starMeme = this.starMemes.find(item => item.fileName === fileName)
+    if (starMeme) {
+      this.showToast('已收藏！')
+      return
+    }
+
+    const starMemeItem: StarMemeItem = {
+      id,
+      fileName,
+      fromFolder,
+      addedAt: Date.now()
+    }
+    
+    this.starMemes.unshift(starMemeItem)
+    this.showToast('已收藏！')
+  },
+  removeFromStarMemes(id: string) {
+    const index = this.starMemes.findIndex(item => item.id === id)
+    if (index > -1) {
+      this.starMemes.splice(index, 1)
+      this.showToast('已取消收藏！')
+    }
   },
   // 主题色
   themeColor: '110,71,148,1', // 默认紫色，因为紫色更有韵味，格式为 r,g,b,a
   themeBackgroundColor: '255,255,255,1',
+  // 应用配置
+  botToken: '',
+  proxyEnabled: false,
+  proxyURL: 'http://127.0.0.1:7890',
   setThemeColor(color: string) {
     this.themeColor = color
-    // 更新CSS变量，支持带透明度的颜色
     if (color.includes(',')) {
       const [r, g, b, a = '1'] = color.split(',')
       document.documentElement.style.setProperty('--theme-primary', `rgba(${r},${g},${b},${a})`)
@@ -36,13 +115,20 @@ export const store = reactive({
   },
   setThemeBackgroundColor(color: string) {
     this.themeBackgroundColor = color
-    // 更新CSS变量，支持带透明度的颜色
     if (color.includes(',')) {
       const [r, g, b, a = '1'] = color.split(',')
       document.documentElement.style.setProperty('--theme-background', `rgba(${r},${g},${b},${a})`)
     } else {
       document.documentElement.style.setProperty('--theme-background', color)
     }
+  },
+  // 配置设置方法
+  setBotToken(token: string) {
+    this.botToken = token
+  },
+  setProxySettings(enabled: boolean, url: string) {
+    this.proxyEnabled = enabled
+    this.proxyURL = url
   },
   // Toast弹窗
   toasts: [] as ToastItem[],
@@ -61,69 +147,134 @@ export const store = reactive({
         this.toasts.splice(index, 1)
       }
     }, 5000)
+  },
+  // 全局右键菜单
+  contextMenu: {
+    visible: false,
+    menuItems: [],
+    position: { x: 0, y: 0 }
+  } as ContextMenuState,
+  showContextMenu(e: MouseEvent, menuItems: ContextMenuItem[]) {
+    e.preventDefault()
+    this.contextMenu.menuItems = menuItems
+    this.contextMenu.position = { x: e.clientX, y: e.clientY }
+    this.contextMenu.visible = true
+  },
+  hideContextMenu() {
+    this.contextMenu.visible = false
+    setTimeout(() => {
+      this.contextMenu.menuItems = []
+    }, 200)
+  },
+  
+  async refreshMemes() {
+    if (this.rootPath) {
+      try {
+        this.allMemesPath = await GenerateAllMemePath(this.rootPath)
+      } catch (error) {
+        console.error('刷新失败:', error)
+      }
+    } else {
+      this.showToast('请先选择主目录', 'error')
+    }
   }
+  
 })
 
-
 watch(() => store.rootPath, (newValue) => {
-  if (window) {    
-    window.localStorage.setItem('rootPath', newValue)
+  if (window) {
+    window.localStorage.setItem(ROOT_PATH_KEY, newValue)
   }
 })
 
 watch(() => store.allMemesPath, (newValue) => {
   if (window) {
-    window.localStorage.setItem('allMemesPath', JSON.stringify(newValue))
+    window.localStorage.setItem(ALL_MEMES_PATH_KEY, JSON.stringify(newValue))
   }
-},{deep: true})
+}, { deep: true })
 
 watch(() => store.themeColor, (newValue) => {
   if (window) {
-    window.localStorage.setItem('themeColor', newValue)
+    window.localStorage.setItem(THEME_COLOR_KEY, newValue)
   }
 })
 
 watch(() => store.themeBackgroundColor, (newValue) => {
   if (window) {
-    window.localStorage.setItem('themeBackgroundColor', newValue)
+    window.localStorage.setItem(THEME_BACKGROUND_COLOR_KEY, newValue)
   }
 })
 
-// init
+watch(() => store.starMemes, (newValue) => {
+  if (window) {
+    window.localStorage.setItem(STAR_MEMES_KEY, JSON.stringify(newValue))
+  }
+}, { deep: true })
+
+watch(() => store.botToken, (newValue) => {
+  if (window) {
+    window.localStorage.setItem(BOT_TOKEN_KEY, newValue)
+  }
+})
+
+watch(() => store.proxyEnabled, (newValue) => {
+  if (window) {
+    window.localStorage.setItem(PROXY_ENABLED_KEY, newValue.toString())
+  }
+})
+
+watch(() => store.proxyURL, (newValue) => {
+  if (window) {
+    window.localStorage.setItem(PROXY_URL_KEY, newValue)
+  }
+})
+
 export function initializeStoreFromCache() {
   if (window) {
-    // 恢复 rootPath
-    const cachedRootPath = window.localStorage.getItem('rootPath')
+    const cachedRootPath = window.localStorage.getItem(ROOT_PATH_KEY)
     if (cachedRootPath) {
       store.rootPath = cachedRootPath
     }
     
-    // 恢复 allMemesPath
-    const cachedAllMemesPath = window.localStorage.getItem('allMemesPath')
+    const cachedAllMemesPath = window.localStorage.getItem(ALL_MEMES_PATH_KEY)
     if (cachedAllMemesPath && cachedAllMemesPath.length > 0) {
       store.allMemesPath = JSON.parse(cachedAllMemesPath)
-      // 初始化tabCurrent
-      if (store.allMemesPath.length > 0) {
-        store.tabCurrent = store.allMemesPath[0].code
-      }
+      store.tabCurrent = STAR_MEMES_KEY
     }
     
-    // 恢复 themeColor
-    const cachedThemeColor = window.localStorage.getItem('themeColor')
+    const cachedThemeColor = window.localStorage.getItem(THEME_COLOR_KEY)
     if (cachedThemeColor) {
       store.setThemeColor(cachedThemeColor)
     } else {
-      // 初始化默认主题色
       store.setThemeColor(store.themeColor)
     }
     
-    // 恢复 themeBackgroundColor
-    const cachedThemeBackgroundColor = window.localStorage.getItem('themeBackgroundColor')
+    const cachedThemeBackgroundColor = window.localStorage.getItem(THEME_BACKGROUND_COLOR_KEY)
     if (cachedThemeBackgroundColor) {
       store.setThemeBackgroundColor(cachedThemeBackgroundColor)
     } else {
-      // 恢复默认主题色
       store.setThemeBackgroundColor(store.themeBackgroundColor)
+    }
+    
+    const cachedStarMemes = window.localStorage.getItem(STAR_MEMES_KEY)
+    if (cachedStarMemes && cachedStarMemes.length > 0) {
+      store.starMemes = JSON.parse(cachedStarMemes)
+    }
+    
+    // 加载配置
+    const cachedBotToken = window.localStorage.getItem(BOT_TOKEN_KEY)
+    if (cachedBotToken) {
+      store.botToken = cachedBotToken
+    }
+    
+    const cachedProxyEnabled = window.localStorage.getItem(PROXY_ENABLED_KEY)
+    if (cachedProxyEnabled) {
+      store.proxyEnabled = cachedProxyEnabled === 'true'
+    }
+    
+    const cachedProxyURL = window.localStorage.getItem(PROXY_URL_KEY)
+    if (cachedProxyURL) {
+      store.proxyURL = cachedProxyURL
     }
   }
 }

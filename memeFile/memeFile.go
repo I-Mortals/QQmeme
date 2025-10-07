@@ -7,69 +7,27 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
-	"unicode/utf16"
-	"unsafe"
+
+	"mymeme/memeFile/sticker"
+	"mymeme/memeFile/utils"
+	"mymeme/windows"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// Windows API 常量定义
-const (
-	// 剪贴板格式常量
-	CF_UNICODETEXT = 13 // Unicode文本格式
-	CF_HDROP       = 15 // 文件拖放格式
-	
-	// 内存分配标志
-	GMEM_MOVEABLE  = 0x0002 // 可移动内存
-	GMEM_ZEROINIT  = 0x0040 // 初始化为零
-	GHND           = GMEM_MOVEABLE | GMEM_ZEROINIT // 组合标志
-)
-
-// Windows API 函数声明
-var (
-	// DLL 句柄
-	user32   = syscall.MustLoadDLL("user32.dll")
-	kernel32 = syscall.MustLoadDLL("kernel32.dll")
-	shell32  = syscall.MustLoadDLL("shell32.dll")
-
-	// 剪贴板相关API
-	procOpenClipboard    = user32.MustFindProc("OpenClipboard")
-	procCloseClipboard   = user32.MustFindProc("CloseClipboard")
-	procEmptyClipboard   = user32.MustFindProc("EmptyClipboard")
-	procSetClipboardData = user32.MustFindProc("SetClipboardData")
-	procGetClipboardData = user32.MustFindProc("GetClipboardData")
-	
-	// 内存管理API
-	procGlobalAlloc = kernel32.MustFindProc("GlobalAlloc")
-	procGlobalLock  = kernel32.MustFindProc("GlobalLock")
-	procGlobalUnlock = kernel32.MustFindProc("GlobalUnlock")
-
-	// 文件拖放API
-	procDragQueryFile = shell32.MustFindProc("DragQueryFileW")
-)
-
-// DROPFILES 结构体定义 - Windows文件拖放结构
-type DROPFILES struct {
-	pFiles uint32 // 文件列表偏移量
-	pt     POINT  // 拖放点坐标
-	fNC    int32  // 非客户区标志
-	fWide  int32  // 宽字符标志
-}
-
-// POINT 结构体定义 - 坐标点
-type POINT struct {
-	X, Y int32
-}
-
 // MemeFile 结构体 - 主要的文件操作和剪贴板管理结构
 type MemeFile struct {
-	ctx context.Context // Wails应用上下文
+	ctx        context.Context // Wails应用上下文
+	fileUtils  *utils.FileUtils
+	imageUtils *utils.ImageUtils
 }
 
 // NewMemeFile 创建新的MemeFile实例
 func NewMemeFile() *MemeFile {
-	return &MemeFile{}
+	return &MemeFile{
+		fileUtils:  utils.NewFileUtils(),
+		imageUtils: utils.NewImageUtils(),
+	}
 }
 
 // SetContext 设置Wails应用上下文
@@ -78,26 +36,20 @@ func (m *MemeFile) SetContext(ctx context.Context) {
 	m.ctx = ctx
 }
 
-// Hello 测试方法
-func (m *MemeFile) Hello() string {
-	log.Println("MemeFile Hello method called")
-	return "hello"
-}
-
 // OpenFileDlg 打开文件选择对话框，返回选择的文件路径列表
 func (m *MemeFile) OpenFileDlg() []string {
 	if m.ctx == nil {
 		log.Println("错误: 上下文未设置")
 		return nil
 	}
-	
+
 	opts := runtime.OpenDialogOptions{}
 	filePaths, err := runtime.OpenMultipleFilesDialog(m.ctx, opts)
 	if err != nil {
 		log.Printf("打开文件对话框失败: %v", err)
 		return nil
 	}
-	
+
 	log.Printf("选择的文件: %v", filePaths)
 	return filePaths
 }
@@ -108,7 +60,7 @@ func (m *MemeFile) SelectRootDir() string {
 		log.Println("错误: 上下文未设置")
 		return ""
 	}
-	
+
 	path, err := runtime.OpenDirectoryDialog(m.ctx, runtime.OpenDialogOptions{
 		Title: "请选择meme根目录",
 	})
@@ -122,68 +74,12 @@ func (m *MemeFile) SelectRootDir() string {
 
 // GetDirs 获取指定目录下的所有子目录
 func (m *MemeFile) GetDirs(path string) []string {
-	if path == "" {
-		log.Println("错误: 路径为空")
-		return nil
-	}
-	
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		log.Printf("读取目录失败 %s: %v", path, err)
-		return nil
-	}
-
-	var dirs []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			dirs = append(dirs, entry.Name())
-		}
-	}
-
-	return dirs
+	return m.fileUtils.GetDirs(path)
 }
 
 // GetImages 获取指定目录下的所有图片文件
 func (m *MemeFile) GetImages(path string) []string {
-	if path == "" {
-		log.Println("错误: 路径为空")
-		return nil
-	}
-	
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		log.Printf("读取目录失败 %s: %v", path, err)
-		return nil
-	}
-
-	var images []string
-	for _, entry := range entries {
-		if !entry.IsDir() && isImageFile(entry.Name()) {
-			images = append(images, entry.Name())
-		}
-	}
-	return images
-}
-
-// 支持的图片扩展名（预定义以提高性能）
-var imageExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
-
-// isImageFile 检查文件是否为支持的图片格式
-func isImageFile(fileName string) bool {
-	if fileName == "" {
-		return false
-	}
-	
-	// 转换为小写进行不区分大小写的比较
-	fileName = strings.ToLower(fileName)
-	
-	// 使用预定义的扩展名列表
-	for _, ext := range imageExtensions {
-		if strings.HasSuffix(fileName, ext) {
-			return true
-		}
-	}
-	return false
+	return m.imageUtils.GetImages(path)
 }
 
 // MemeInfo 结构体 - 存储meme信息
@@ -195,22 +91,20 @@ type MemeInfo struct {
 	Memes      []string `json:"memes"`      // 图片文件列表
 }
 
-// GenerateAllMemePath 扫描根目录，生成所有meme的信息
+// GenerateAllMemePath 生成所有meme的信息
 func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
 	if rootPath == "" {
 		log.Println("错误: 根路径为空")
 		return nil
 	}
-	
-	// 检查根目录是否存在
-	if _, err := os.Stat(rootPath); os.IsNotExist(err) {
+
+	if !m.fileUtils.PathExists(rootPath) {
 		log.Printf("根目录不存在: %s", rootPath)
 		return nil
 	}
 
 	var loadedMemes []MemeInfo
 
-	// 读取根目录下的所有条目
 	entries, err := os.ReadDir(rootPath)
 	if err != nil {
 		log.Printf("读取根目录失败 %s: %v", rootPath, err)
@@ -223,7 +117,7 @@ func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
 		if !entry.IsDir() {
 			continue
 		}
-		
+
 		dirName := entry.Name()
 		dirPath := filepath.Join(rootPath, dirName)
 
@@ -250,209 +144,216 @@ func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
 	return loadedMemes
 }
 
-// Windows API 封装函数
-
-// OpenClipboard 打开剪贴板
-func OpenClipboard(hWnd uintptr) bool {
-	ret, _, _ := procOpenClipboard.Call(hWnd)
-	return ret != 0
-}
-
-// CloseClipboard 关闭剪贴板
-func CloseClipboard() bool {
-	ret, _, _ := procCloseClipboard.Call()
-	return ret != 0
-}
-
-// EmptyClipboard 清空剪贴板
-func EmptyClipboard() bool {
-	ret, _, _ := procEmptyClipboard.Call()
-	return ret != 0
-}
-
-// SetClipboardData 设置剪贴板数据
-func SetClipboardData(uFormat uint, hMem uintptr) uintptr {
-	ret, _, _ := procSetClipboardData.Call(uintptr(uFormat), hMem)
-	return ret
-}
-
-// GlobalAlloc 分配全局内存
-func GlobalAlloc(uFlags uint, dwBytes uintptr) uintptr {
-	ret, _, _ := procGlobalAlloc.Call(uintptr(uFlags), dwBytes)
-	return ret
-}
-
-// GlobalLock 锁定全局内存
-func GlobalLock(hMem uintptr) uintptr {
-	ret, _, _ := procGlobalLock.Call(hMem)
-	return ret
-}
-
-// GlobalUnlock 解锁全局内存
-// 注意：即使返回0也不一定是错误，特别是在内存块已经解锁的情况下
-func GlobalUnlock(hMem uintptr) bool {
-	ret, _, _ := procGlobalUnlock.Call(hMem)
-	return ret != 0
-}
-
-// WriteFileToClipboard 将文件复制到剪贴板
 func (m *MemeFile) WriteFileToClipboard(filePath string) error {
-	if filePath == "" {
-		return fmt.Errorf("文件路径为空")
-	}
-	
-	// 1. 检查文件是否存在
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return fmt.Errorf("文件不存在: %s", filePath)
-	}
+	log.Printf("复制文件到剪贴板: %s", filePath)
+	return windows.WriteFileToClipboard(filePath)
+}
 
-	// 2. 获取文件的完整路径
-	fullPath, err := filepath.Abs(filePath)
-	if err != nil {
-		return fmt.Errorf("获取文件绝对路径失败: %v", err)
-	}
-	
-	log.Printf("复制文件到剪贴板: %s", fullPath)
+func ClipboardHasFiles() bool {
+	return windows.ClipboardHasFiles()
+}
 
-	// 3. 打开剪贴板
-	if !OpenClipboard(0) {
-		return fmt.Errorf("打开剪贴板失败")
-	}
-	defer CloseClipboard()
+func GetFilesFromClipboard() ([]string, error) {
+	return windows.GetFilesFromClipboard()
+}
 
-	// 4. 清空剪贴板
-	if !EmptyClipboard() {
-		return fmt.Errorf("清空剪贴板失败")
+func (m *MemeFile) RenameFilesInOrder(tabName string, folderPath string, fileNames []string) error {
+	if tabName == "" {
+		return fmt.Errorf("tab名称不能为空")
+	}
+	if folderPath == "" {
+		return fmt.Errorf("文件夹路径不能为空")
+	}
+	if len(fileNames) == 0 {
+		return fmt.Errorf("文件列表不能为空")
 	}
 
-	// 5. 将文件路径转换为UTF-16格式
-	runes := []rune(fullPath)
-	utf16Path := utf16.Encode(runes)
-	// 添加双空终止符（Windows文件列表要求）
-	utf16Path = append(utf16Path, 0) // 第一个空终止符
-	utf16Path = append(utf16Path, 0) // 第二个空终止符（列表结束）
-
-	// 6. 计算DROPFILES结构大小和总内存大小
-	dropFilesSize := unsafe.Sizeof(DROPFILES{})
-	pathSize := len(utf16Path) * 2
-	totalSize := dropFilesSize + uintptr(pathSize)
-
-	// 7. 分配全局内存
-	hGlobal := GlobalAlloc(GHND, totalSize)
-	if hGlobal == 0 {
-		return fmt.Errorf("内存分配失败")
+	if !m.fileUtils.PathExists(folderPath) {
+		return fmt.Errorf("文件夹不存在: %s", folderPath)
 	}
 
-	// 8. 锁定内存并获取指针
-	ptr := GlobalLock(hGlobal)
-	if ptr == 0 {
-		return fmt.Errorf("内存锁定失败")
-	}
+	// 创建临时文件名映射，避免重命名冲突
+	tempFileNames := make(map[string]string)
+	finalFileNames := make(map[string]string)
 
-	// 9. 设置DROPFILES结构
-	// 注意：这里的unsafe.Pointer使用是安全的，因为ptr来自GlobalLock
-	dropFiles := (*DROPFILES)(unsafe.Pointer(ptr))
-	dropFiles.pFiles = uint32(dropFilesSize)
-	dropFiles.pt.X = 0
-	dropFiles.pt.Y = 0
-	dropFiles.fNC = 0
-	dropFiles.fWide = 1 // 使用Unicode
-
-	// 10. 安全地复制文件路径到内存
-	if pathSize > 0 && len(utf16Path) > 0 {
-		// 注意：这里的unsafe.Pointer使用是安全的，因为ptr来自GlobalLock
-		pathPtr := unsafe.Pointer(uintptr(ptr) + dropFilesSize)
-		// 使用字节切片进行更安全的内存操作
-		pathByteSlice := (*[1 << 21]byte)(pathPtr)[:pathSize:pathSize]
-		pathUint16Slice := (*[1 << 20]uint16)(unsafe.Pointer(&pathByteSlice[0]))
-		if len(utf16Path) <= len(pathUint16Slice) {
-			copy(pathUint16Slice[:len(utf16Path)], utf16Path)
+	// 将所有文件重命名为临时名称
+	for i, fileName := range fileNames {
+		if fileName == "" {
+			continue
 		}
+
+		oldPath := filepath.Join(folderPath, fileName)
+
+		if !m.fileUtils.PathExists(oldPath) {
+			continue
+		}
+
+		ext := m.fileUtils.GetFileExt(fileName)
+
+		// 生成临时文件名
+		tempFileName := fmt.Sprintf("temp_%d_%s%s", i, tabName, ext)
+		tempPath := filepath.Join(folderPath, tempFileName)
+
+		// 生成最终文件名
+		finalFileName := fmt.Sprintf("%s_%02d%s", tabName, i+1, ext)
+
+		// 重命名为临时文件名
+		if err := os.Rename(oldPath, tempPath); err != nil {
+			return fmt.Errorf("重命名文件失败 %s -> %s: %v", oldPath, tempPath, err)
+		}
+
+		tempFileNames[tempFileName] = fileName
+		finalFileNames[tempFileName] = finalFileName
 	}
 
-	// 11. 解锁内存
-	_ = GlobalUnlock(hGlobal)
+	// 将临时文件名重命名为最终文件名
+	for tempFileName, finalFileName := range finalFileNames {
+		tempPath := filepath.Join(folderPath, tempFileName)
+		finalPath := filepath.Join(folderPath, finalFileName)
 
-	// 12. 设置剪贴板数据
-	if SetClipboardData(CF_HDROP, hGlobal) == 0 {
-		return fmt.Errorf("设置剪贴板数据失败")
+		if err := os.Rename(tempPath, finalPath); err != nil {
+			// 尝试回滚已重命名的文件
+			if originalName, exists := tempFileNames[tempFileName]; exists {
+				originalPath := filepath.Join(folderPath, originalName)
+				os.Rename(tempPath, originalPath)
+			}
+
+			return fmt.Errorf("重命名文件失败 %s -> %s: %v", tempFileName, finalFileName, err)
+		}
 	}
 
 	return nil
 }
 
-// WriteGIFToClipboard 专门用于复制GIF文件到剪贴板
-func (m *MemeFile) WriteGIFToClipboard(gifPath string) error {
-	if gifPath == "" {
-		return fmt.Errorf("GIF文件路径为空")
+func (m *MemeFile) RenameFile(folderPath string, oldFileName string, newFileName string) error {
+	if folderPath == "" {
+		return fmt.Errorf("文件夹路径不能为空")
 	}
-	
-	// 检查文件扩展名
-	ext := strings.ToLower(filepath.Ext(gifPath))
-	if ext != ".gif" {
-		return fmt.Errorf("文件不是GIF格式: %s", gifPath)
+	if oldFileName == "" {
+		return fmt.Errorf("原文件名不能为空")
+	}
+	if newFileName == "" {
+		return fmt.Errorf("新文件名不能为空")
 	}
 
-	return m.WriteFileToClipboard(gifPath)
+	if !m.fileUtils.PathExists(folderPath) {
+		return fmt.Errorf("文件夹不存在: %s", folderPath)
+	}
+
+	oldPath := filepath.Join(folderPath, oldFileName)
+	newPath := filepath.Join(folderPath, newFileName)
+
+	if !m.fileUtils.PathExists(oldPath) {
+		return fmt.Errorf("原文件不存在: %s", oldFileName)
+	}
+
+	if m.fileUtils.PathExists(newPath) {
+		return fmt.Errorf("文件名已存在: %s", newFileName)
+	}
+
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return fmt.Errorf("重命名文件失败 %s -> %s: %v", oldFileName, newFileName, err)
+	}
+
+	return nil
 }
 
-// ClipboardHasFiles 检查剪贴板中是否有文件
-func ClipboardHasFiles() bool {
-	if !OpenClipboard(0) {
-		return false
+func (m *MemeFile) RenameFoldersInOrder(rootPath string, folderNames []string) error {
+	if rootPath == "" {
+		return fmt.Errorf("根路径不能为空")
 	}
-	defer CloseClipboard()
-
-	hGlobal, _, _ := procGetClipboardData.Call(uintptr(CF_HDROP))
-	return hGlobal != 0
-}
-
-// GetFilesFromClipboard 从剪贴板获取文件列表
-func GetFilesFromClipboard() ([]string, error) {
-	if !OpenClipboard(0) {
-		return nil, fmt.Errorf("打开剪贴板失败")
-	}
-	defer CloseClipboard()
-
-	hGlobal, _, _ := procGetClipboardData.Call(uintptr(CF_HDROP))
-	if hGlobal == 0 {
-		return nil, fmt.Errorf("剪贴板中没有文件数据")
+	if len(folderNames) == 0 {
+		return fmt.Errorf("文件夹列表不能为空")
 	}
 
-	ptr := GlobalLock(hGlobal)
-	if ptr == 0 {
-		return nil, fmt.Errorf("锁定内存失败")
-	}
-	defer GlobalUnlock(hGlobal)
-
-	// 获取文件数量
-	fileCount, _, _ := procDragQueryFile.Call(hGlobal, 0xFFFFFFFF, 0, 0)
-	if fileCount == 0 {
-		return []string{}, nil
+	if !m.fileUtils.PathExists(rootPath) {
+		return fmt.Errorf("根目录不存在: %s", rootPath)
 	}
 
-	var files []string
-	for i := uintptr(0); i < fileCount; i++ {
-		// 获取文件名长度
-		length, _, _ := procDragQueryFile.Call(hGlobal, i, 0, 0)
-		if length == 0 {
+	// 创建临时文件夹名映射，避免重命名冲突
+	tempFolderNames := make(map[string]string)
+	finalFolderNames := make(map[string]string)
+
+	for i, folderName := range folderNames {
+		if folderName == "" {
 			continue
 		}
 
-		// 分配缓冲区并获取文件名
-		buffer := make([]uint16, length+1)
-		if len(buffer) > 0 {
-			// 使用更安全的方式获取缓冲区指针
-			// 注意：这里的unsafe.Pointer使用是安全的，因为buffer是Go分配的切片
-			bufferPtr := &buffer[0]
-			procDragQueryFile.Call(hGlobal, i, uintptr(unsafe.Pointer(bufferPtr)), length+1)
+		oldPath := filepath.Join(rootPath, folderName)
+
+		// 检查原文件夹是否存在
+		if !m.fileUtils.PathExists(oldPath) {
+			continue
 		}
 
-		fileName := syscall.UTF16ToString(buffer)
-		if fileName != "" {
-			files = append(files, fileName)
+		// 生成临时文件夹名
+		tempFolderName := fmt.Sprintf("temp_%d_%s", i, folderName)
+		tempPath := filepath.Join(rootPath, tempFolderName)
+
+		// 生成最终文件夹名 - 如果已经是 序号_ 开头，则去掉序号部分
+		cleanFolderName := m.cleanFolderName(folderName)
+		finalFolderName := fmt.Sprintf("%02d_%s", i+1, cleanFolderName)
+
+		// 重命名为临时文件夹名
+		if err := os.Rename(oldPath, tempPath); err != nil {
+			return fmt.Errorf("重命名文件夹失败 %s -> %s: %v", oldPath, tempPath, err)
+		}
+
+		tempFolderNames[tempFolderName] = folderName
+		finalFolderNames[tempFolderName] = finalFolderName
+	}
+
+	// 将临时文件夹名重命名为最终文件夹名
+	for tempFolderName, finalFolderName := range finalFolderNames {
+		tempPath := filepath.Join(rootPath, tempFolderName)
+		finalPath := filepath.Join(rootPath, finalFolderName)
+
+		if err := os.Rename(tempPath, finalPath); err != nil {
+			// 如果失败，回滚已重命名的文件夹
+			if originalName, exists := tempFolderNames[tempFolderName]; exists {
+				originalPath := filepath.Join(rootPath, originalName)
+				os.Rename(tempPath, originalPath)
+			}
+
+			return fmt.Errorf("重命名文件夹失败 %s -> %s: %v", tempFolderName, finalFolderName, err)
 		}
 	}
 
-	return files, nil
+	return nil
+}
+
+func (m *MemeFile) cleanFolderName(folderName string) string {
+	if strings.Contains(folderName, "_") {
+		parts := strings.SplitN(folderName, "_", 2)
+		if len(parts) == 2 && len(parts[0]) > 0 {
+			// 检查第一部分是否是数字
+			isNumber := true
+			for _, r := range parts[0] {
+				if r < '0' || r > '9' {
+					isNumber = false
+					break
+				}
+			}
+			if isNumber {
+				return parts[1]
+			}
+		}
+	}
+	return folderName
+}
+
+func (m *MemeFile) DownloadTgStickerSet(stickerSetName string, savePath string, botToken string, proxyURL string, needProxy bool) error {
+	downloader := sticker.NewTelegramDownloader(m.ctx, botToken, proxyURL, needProxy)
+
+	progressCallback := func(progress sticker.DownloadProgress) {
+		if m.ctx != nil {
+			progressData := map[string]interface{}{
+				"stickerSetName": stickerSetName,
+				"progress":       progress,
+			}
+			runtime.EventsEmit(m.ctx, "telegram-download-progress", progressData)
+		}
+	}
+
+	return downloader.DownloadTgStickerSet(stickerSetName, savePath, progressCallback)
 }

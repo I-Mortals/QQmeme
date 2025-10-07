@@ -1,0 +1,8 @@
+export const ROOT_PATH_KEY = 'rootPath'
+export const ALL_MEMES_PATH_KEY = 'allMemesPath'
+export const THEME_COLOR_KEY = 'themeColor'
+export const THEME_BACKGROUND_COLOR_KEY = 'themeBackgroundColor'
+export const STAR_MEMES_KEY = 'starMemes'
+export const BOT_TOKEN_KEY = 'botToken'
+export const PROXY_ENABLED_KEY = 'proxyEnabled'
+export const PROXY_URL_KEY = 'proxyURL'

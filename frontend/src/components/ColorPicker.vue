@@ -1,17 +1,20 @@
 <script lang="ts" setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { autoUpdate, flip, offset, useFloating } from '@floating-ui/vue'
+import { Hsl, Rgb, convertHslToRgb } from 'culori'
 import {
-  converter,
-  convertHslToRgb,
-  formatHex,
-  formatHex8,
-  formatHsl,
-  Hsl,
-  hsl as hslConverter,
-  parse,
-  Rgb
-} from 'culori'
+  WHITE_RGB,
+  BLACK_RGB,
+  hexToHsl,
+  parseHsl,
+  hslToHex,
+  hslToHex8,
+  hslToRgb,
+  parseRgb,
+  colorToHsl,
+  colorToRgb,
+  clampValue
+} from '@/utils/color'
 
 interface ColorPickerProps {
   value: string
@@ -71,60 +74,6 @@ const { floatingStyles, placement, isPositioned } = useFloating(buttonRef, popup
   open: showPicker
 })
 
-// 默认白色
-const DEFAULT_COLOR: Hsl = {
-  mode: 'hsl',
-  h: 0,
-  s: 0,
-  l: 1,
-  alpha: 1
-}
-// 1,1,1 是 culori 里的白色
-const WHITE_RGB = { r: 1, g: 1, b: 1 }
-// 0,0,0 是 culori 里的黑色
-const BLACK_RGB = { r: 0, g: 0, b: 0 }
-
-const hexToHsl = (hex: string): Hsl => {
-  return hslConverter(hex) || DEFAULT_COLOR
-}
-
-/**
- * hsl 转成直接能用的
- */
-const parseHsl = (hslColor: Hsl): HslState => {
-  const { h, s, l, alpha } = hslColor
-  return {
-    h: Number(h?.toFixed(2)) || 0,
-    s: Number((s * 100).toFixed(2)),
-    l: Number((l * 100).toFixed(2)),
-    alpha: alpha ?? 1
-  }
-}
-
-const hslToHex = (h: number = 0, s: number, l: number): string => {
-  return formatHex(`hsl(${h},${s}%,${l}%)`) || formatHex(DEFAULT_COLOR)
-}
-
-const hslToHex8 = (h: number = 0, s: number, l: number, alpha: number = 1): string => {
-  return formatHex8(`hsl(${h},${s}%,${l}%,${alpha})`) || formatHex8(DEFAULT_COLOR)
-}
-
-const hslToRgb = (h: number = 0, s: number, l: number): Rgb => {
-  return (converter('rgb')(`hsl(${h},${s}%,${l}%)`) as Rgb) || (converter('rgb')('white') as Rgb)
-}
-
-/**
- * rgb 转成直接能用的
- */
-const parseRgb = (rgbColor: Rgb): RgbState => {
-  const { r, g, b, alpha } = rgbColor
-  return {
-    r: Math.round(r * 255),
-    g: Math.round(g * 255),
-    b: Math.round(b * 255),
-    alpha
-  }
-}
 
 const currentColor = computed(() => {
   const { h, s, l, alpha } = hsl.value
@@ -218,23 +167,12 @@ const updateSliderPositions = (): void => {
     sliderPositions.value = {
       h: ((hsl.value.h || 0) / 360) * hueRect.width,
       s: (hsl.value.s / 100) * slRect.width,
-      l: (0.5 - hsl.value.l / 100) * slRect.height,
+      l: (1 - hsl.value.l / 100) * slRect.height,
       alpha: (hsl.value.alpha ?? 1) * alphaRect.width
     }
   }
 }
 
-const clampValue = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
-
-const handleClickOutside = (event: MouseEvent): void => {
-  const target = event.target as Node
-  const isInsideButton = buttonRef.value?.contains(target)
-  const isInsidePopup = popupRef.value?.contains(target)
-
-  if (!isInsideButton && !isInsidePopup) {
-    showPicker.value = false
-  }
-}
 
 const updateHueFromEvent = (event: MouseEvent): void => {
   const hueEl = hSliderRef.value
@@ -282,7 +220,7 @@ const handleHueMouseDown = (event: MouseEvent): void => {
 }
 
 // 计算渐变区域指定位置的颜色
-const calculateColorAtPosition = (x: number, y: number, hue: number): RgbState => {
+const calculateColorAtPosition = (x: number, y: number, hue: number): { r: number; g: number; b: number; alpha?: number } => {
   const hueColor = convertHslToRgb({
     h: hue,
     s: 1,
@@ -323,7 +261,7 @@ const updateSLFromEvent = (event: MouseEvent): void => {
   const rgbColor = calculateColorAtPosition(relativeX, relativeY, hsl.value.h || 0)
   const rgbStr = `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})`
 
-  const hslColor = parseHsl(hslConverter(formatHsl(rgbStr)) as Hsl)
+  const hslColor = parseHsl(hexToHsl(rgbStr))
 
   hsl.value.l = hslColor.l
   hsl.value.s = hslColor.s
@@ -334,7 +272,6 @@ const handleSLAreaMouseDown = (event: MouseEvent): void => {
   event.preventDefault()
   isDragging.value = true
   dragType.value = 'sl'
-  // 点击处更新颜色
   updateSLFromEvent(event)
 
   const { handleMouseMove, handleMouseUp } = createDragHandlers('sl', updateSLFromEvent)
@@ -368,17 +305,12 @@ const handleAlphaMouseDown = (event: MouseEvent): void => {
 }
 
 onMounted(() => {
-  document.addEventListener('mousedown', handleClickOutside)
   const colorValue = props.value
 
-  rgb.value = parseRgb(parse(colorValue) as Rgb)
-  hsl.value = parseHsl(converter('hsl')(colorValue) || DEFAULT_COLOR)
+  rgb.value = colorToRgb(colorValue)
+  hsl.value = colorToHsl(colorValue)
 
   updateSliderPositions()
-})
-
-onUnmounted(() => {
-  document.removeEventListener('mousedown', handleClickOutside)
 })
 </script>
 
@@ -388,12 +320,13 @@ onUnmounted(() => {
       class="color-preview-button"
       ref="buttonRef"
       @click="showPicker = !showPicker">
-      <div class="color-preview-container">
-        <div
-          class="color-preview"
-          :style="{ backgroundColor: currentColor }"/>
-      </div>
-      <div class="color-value">{{ currentColor }}</div>
+      <slot name="trigger" :currentColor="currentColor">
+        <div class="color-preview-container">
+          <div
+            class="color-preview"
+            :style="{ backgroundColor: currentColor }" />
+        </div>
+      </slot>
     </div>
 
     <Teleport to="body">
@@ -403,10 +336,10 @@ onUnmounted(() => {
         <div
           v-show="isPositioned"
           ref="popupRef"
+          v-click-outside="() => (showPicker = false)"
           class="color-picker-popup"
           :class="`popup-${placement}`"
-          :style="floatingStyles"
-          @click.stop>
+          :style="floatingStyles">
           <div class="color-picker-content">
             <!-- s,l -->
             <div
@@ -420,7 +353,7 @@ onUnmounted(() => {
                   left: `${sliderPositions.s}px`,
                   top: `${sliderPositions.l}px`,
                   backgroundColor: currentColor
-                }"/>
+                }" />
             </div>
 
             <!-- h -->
@@ -458,7 +391,7 @@ onUnmounted(() => {
                   @input="(e) => handleRgbInput('r', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="255"
-                  class="rgb-input"/>
+                  class="rgb-input" />
               </div>
               <div class="input-group">
                 <label>G</label>
@@ -467,7 +400,7 @@ onUnmounted(() => {
                   @input="(e) => handleRgbInput('g', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="255"
-                  class="rgb-input"/>
+                  class="rgb-input" />
               </div>
               <div class="input-group">
                 <label>B</label>
@@ -476,7 +409,7 @@ onUnmounted(() => {
                   @input="(e) => handleRgbInput('b', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="255"
-                  class="rgb-input"/>
+                  class="rgb-input" />
               </div>
               <div class="input-group">
                 <label>A</label>
@@ -485,7 +418,7 @@ onUnmounted(() => {
                   @input="(e) => handleAlphaInput(Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="100"
-                  class="alpha-input-field"/>
+                  class="alpha-input-field" />
               </div>
             </div>
 
@@ -498,7 +431,7 @@ onUnmounted(() => {
                   @input="(e) => handleHslInput('h', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="360"
-                  class="hsl-input"/>
+                  class="hsl-input" />
               </div>
               <div class="input-group">
                 <label>S</label>
@@ -507,7 +440,7 @@ onUnmounted(() => {
                   @input="(e) => handleHslInput('s', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="100"
-                  class="hsl-input"/>
+                  class="hsl-input" />
               </div>
               <div class="input-group">
                 <label>L</label>
@@ -516,7 +449,7 @@ onUnmounted(() => {
                   @input="(e) => handleHslInput('l', Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="100"
-                  class="hsl-input"/>
+                  class="hsl-input" />
               </div>
               <div class="input-group">
                 <label>A</label>
@@ -525,7 +458,7 @@ onUnmounted(() => {
                   @input="(e) => handleAlphaInput(Number((e.target as HTMLInputElement).value))"
                   min="0"
                   max="100"
-                  class="alpha-input-field"/>
+                  class="alpha-input-field" />
               </div>
             </div>
 
@@ -546,28 +479,20 @@ onUnmounted(() => {
     </Teleport>
   </div>
 </template>
-<style scoped>
+<style lang="less" scoped>
 .color-picker {
   position: relative;
   display: inline-block;
 }
 
 .color-preview-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
+  display: inline-block;
   cursor: pointer;
-  backdrop-filter: blur(10px);
   transition: all 0.2s ease;
-}
 
-.color-preview-button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
+  &:hover .color-preview {
+    transform: scale(1.05);
+  }
 }
 
 .color-preview-container {
@@ -586,10 +511,6 @@ onUnmounted(() => {
   height: 100%;
   border-radius: 0.25rem;
   transition: transform 0.1s ease;
-}
-
-.color-preview-button:hover .color-preview {
-  transform: scale(1.05);
 }
 
 .color-value {
@@ -633,6 +554,10 @@ onUnmounted(() => {
   border-radius: 0.375rem;
   cursor: crosshair;
   background-blend-mode: multiply;
+
+  &:hover .color-selector {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
 }
 
 .color-selector {
@@ -647,10 +572,6 @@ onUnmounted(() => {
   transition: transform 0.1s ease;
 }
 
-.saturation-lightness-area:hover .color-selector {
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
 .hue-slider-container {
   width: 100%;
 }
@@ -663,10 +584,14 @@ onUnmounted(() => {
   cursor: pointer;
   border: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
-}
 
-.hue-slider:hover {
-  border-color: rgba(0, 0, 0, 0.2);
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+
+    .hue-selector {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
 }
 
 .hue-selector {
@@ -683,10 +608,6 @@ onUnmounted(() => {
   transition: transform 0.1s ease;
 }
 
-.hue-slider:hover .hue-selector {
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
 .alpha-slider-container {
   width: 100%;
 }
@@ -701,10 +622,14 @@ onUnmounted(() => {
   transition: all 0.2s ease;
   background-size: 8px 8px, 100% 100%;
   background-position: 0 0, 0 0;
-}
 
-.alpha-slider:hover {
-  border-color: rgba(0, 0, 0, 0.2);
+  &:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+
+    .alpha-selector {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+  }
 }
 
 .alpha-selector {
@@ -721,10 +646,6 @@ onUnmounted(() => {
   transition: transform 0.1s ease;
 }
 
-.alpha-slider:hover .alpha-selector {
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
 .rgb-inputs,
 .hsl-inputs {
   display: flex;
@@ -736,13 +657,13 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-}
 
-.input-group label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  text-align: center;
+  label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    text-align: center;
+  }
 }
 
 .rgb-input,
@@ -756,20 +677,16 @@ onUnmounted(() => {
   text-align: center;
   transition: all 0.2s ease;
   background: white;
-}
 
-.rgb-input:focus,
-.hsl-input:focus,
-.alpha-input-field:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
 
-.rgb-input:hover:not(:focus),
-.hsl-input:hover:not(:focus),
-.alpha-input-field:hover:not(:focus) {
-  border-color: #9ca3af;
+  &:hover:not(:focus) {
+    border-color: #9ca3af;
+  }
 }
 
 .current-color-preview {
@@ -820,58 +737,4 @@ onUnmounted(() => {
   color: #6b7280;
 }
 
-@media (max-width: 480px) {
-  .saturation-lightness-area {
-    height: 100px;
-  }
-
-  .rgb-inputs,
-  .hsl-inputs {
-    gap: 0.5rem;
-  }
-
-  .color-picker-content {
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-}
-
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .color-picker-popup {
-    background: #1f2937;
-    border: 1px solid #374151;
-  }
-
-  .input-group label {
-    color: #d1d5db;
-  }
-
-  .rgb-input,
-  .hsl-input,
-  .alpha-input-field {
-    background: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-  }
-
-  .rgb-input:focus,
-  .hsl-input:focus,
-  .alpha-input-field:focus {
-    border-color: #3b82f6;
-  }
-
-  .current-color-preview {
-    background: #374151;
-    border-color: #4b5563;
-  }
-
-  .preview-label {
-    color: #f9fafb;
-  }
-
-  .preview-hex {
-    color: #d1d5db;
-  }
-}
 </style>

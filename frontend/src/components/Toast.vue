@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '../store'
+import { store } from '@/store'
 import { Icon } from '@iconify/vue'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
@@ -32,7 +32,7 @@ export interface ToastItem {
 }
 </script>
 
-<style scoped>
+<style lang="less" scoped>
 .toast-container {
   position: fixed;
   top: 20px;
@@ -57,6 +57,30 @@ export interface ToastItem {
   backdrop-filter: blur(10px);
   min-width: 200px;
   max-width: 100%;
+
+  &-success {
+    .toast-icon {
+      background: #4ade80;
+    }
+  }
+
+  &-error {
+    .toast-icon {
+      background: #ef4444;
+    }
+  }
+
+  &-warning {
+    .toast-icon {
+      background: #f59e0b;
+    }
+  }
+
+  &-info {
+    .toast-icon {
+      background: #3b82f6;
+    }
+  }
 }
 
 .toast-icon {
@@ -73,22 +97,6 @@ export interface ToastItem {
   flex-shrink: 0;
 }
 
-.toast-icon-success {
-  background: #4ade80;
-}
-
-.toast-icon-error {
-  background: #ef4444;
-}
-
-.toast-icon-warning {
-  background: #f59e0b;
-}
-
-.toast-icon-info {
-  background: #3b82f6;
-}
-
 .toast-message {
   font-size: 14px;
   font-weight: 500;
@@ -96,25 +104,19 @@ export interface ToastItem {
   overflow-wrap: break-word;
 }
 
-.toast-enter-active {
-  transition: all 0.3s ease-out;
-}
-
+.toast-move,
+.toast-enter-active,
 .toast-leave-active {
-  transition: all 0.3s ease-in;
+  transition: all 0.3s ease;
 }
 
-.toast-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
+.toast-enter-from,
 .toast-leave-to {
   opacity: 0;
   transform: translateX(100%);
 }
 
-.toast-move {
-  transition: transform 0.3s ease;
+.toast-leave-active {
+  position: absolute;
 }
 </style>

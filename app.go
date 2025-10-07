@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 )
 
 // App struct
@@ -28,9 +27,4 @@ func (a *App) shutdown(ctx context.Context) {
 // 从顶层传入app的ctx
 func (a *App) SetContext(ctx context.Context) {
 	a.ctx = ctx
-}
-
-// Greet 返回给定名称的问候语
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
 }

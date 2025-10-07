@@ -3,20 +3,24 @@
 import {memeFile} from '../models';
 import {context} from '../models';
 
+export function DownloadTgStickerSet(arg1:string,arg2:string,arg3:string,arg4:string,arg5:boolean):Promise<void>;
+
 export function GenerateAllMemePath(arg1:string):Promise<Array<memeFile.MemeInfo>>;
 
 export function GetDirs(arg1:string):Promise<Array<string>>;
 
 export function GetImages(arg1:string):Promise<Array<string>>;
 
-export function Hello():Promise<string>;
-
 export function OpenFileDlg():Promise<Array<string>>;
+
+export function RenameFile(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function RenameFilesInOrder(arg1:string,arg2:string,arg3:Array<string>):Promise<void>;
+
+export function RenameFoldersInOrder(arg1:string,arg2:Array<string>):Promise<void>;
 
 export function SelectRootDir():Promise<string>;
 
 export function SetContext(arg1:context.Context):Promise<void>;
 
 export function WriteFileToClipboard(arg1:string):Promise<void>;
-
-export function WriteGIFToClipboard(arg1:string):Promise<void>;

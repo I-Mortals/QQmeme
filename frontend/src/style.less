@@ -1,5 +1,7 @@
 @import "normalize.css";
+@import "./styles/input.less";
 
+// 全局样式重置和基础设置
 :root {
   /* 主题色变量 - RGBA格式 */
   --theme-primary: rgba(110,71,148,1);
@@ -7,35 +9,7 @@
   --theme-background: rgba(255,255,255,1);
 }
 
-/* 全局滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.5);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
+// 全局元素样式
 * {
   box-sizing: border-box;
 }
@@ -59,4 +33,32 @@ body {
   font-weight: 400;
   src: local(""),
   url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+
+  &-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+
+  &-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    &:active {
+      background: rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  &-corner {
+    background: transparent;
+  }
 }
