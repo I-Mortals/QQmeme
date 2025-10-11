@@ -1,83 +1,71 @@
 <script setup lang="ts">
+import { store } from '@/store';
 import { ref } from 'vue'
-
-const toggleList = (index:number) => {
-    lists.value[index].isExpanded = !lists.value[index].isExpanded;
-};
-
-
 
 const lists = ref([
     {
-        title: "杂烩",
-        isExpanded: false,
-        items: [
-            "海绵宝宝",
-        ]
+        title: "Emojiall",
+        url: 'https://www.emojiall.com/',
+        icon: 'favicon.ico'
     },
     {
-        title: "粉丝社区",
-        isExpanded: false,
-        items: [
-            "ikun",
-        ]
+        title: "Cool",
+        url: 'https://bqb.cool/',
+        icon: 'favicon.ico'
     },
     {
-        title: "搞怪",
-        isExpanded: false,
-        items: [
-            "猥琐萌",
-        ]
-    }
+        title: "斗图吧",
+        url: 'https://www.doutub.com/',
+        icon: 'favicon.ico'
+    },
 ]);
 
+const copy = async (url: string) => {
+    try {
+        await navigator.clipboard.writeText(url);
+        store.showToast('复制网址成功！')
+    } catch (error) {
+        store.showToast('复制网址失败！')
+    }
 
-
+}
 
 </script>
 
 <template>
-    <div class="container-body">
+    <div class="container">
+        <div class="container-body">
+            <h2 class="">表情库导航</h2>
+            <hr>
+            <div class="card-body">
 
-        <!-- 侧边栏 -->
-        <div class="sidebar">
-            <div class="components-container">
-
-                <div class="expandable-list" v-for="(list, index) in lists" :key="index">
-                    <div class="list-header" @click="()=>toggleList(index)">
-                        <div class="list-title">{{ list.title }}</div>
-                        <div class="list-icon" :class="{ expanded: list.isExpanded }">▼</div>
-                    </div>
-                    <div class="list-content" :class="{ expanded: list.isExpanded }">
-                        <div class="list-items">
-                            <div class="list-item" v-for="(item, index) in list.items" :key="index">
-                                <div class="item-icon">●</div>
-                                <div class="item-text">{{ item }}</div>
-                            </div>
-                        </div>
+                <div class="card-list" @click="() => copy(item.url)" v-for="(item, index) in lists" :key="index">
+                    <div class="card-list-item">
+                        <img :src="item.url + item.icon" alt="">
+                        <div>名称：{{ item.title }}</div>
+                        <div>网址：{{ item.url }}</div>
                     </div>
                 </div>
 
             </div>
         </div>
-
-        <div class="container">
-            我是很多的图片
-        </div>
-
     </div>
 </template>
 
 <style lang="less" scoped>
-
-.container-body{
-    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-}
 .container {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
     width: 100%;
     max-width: 800px;
     background: rgba(255, 255, 255, 0.1);
@@ -89,17 +77,13 @@ const lists = ref([
     padding: 30px;
 }
 
-
-h1 {
-    color: white;
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-.subtitle {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1.2rem;
+hr {
+    margin: 20px 0;
+    color: #fff;
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+    width: 100%;
 }
 
 .components-container {
@@ -108,8 +92,17 @@ h1 {
     gap: 20px;
 }
 
-/* 可展开列表组件样式 */
-.expandable-list {
+.card-body {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.card-list {
+    padding: 15px;
+    display: flex;
     background: rgba(255, 255, 255, 0.15);
     border-radius: 12px;
     overflow: hidden;
@@ -118,99 +111,16 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.expandable-list:hover {
+.card-list:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-.list-header {
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
+.card-list-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     align-items: center;
-    cursor: pointer;
-    background: rgba(0, 0, 0, 0.1);
-    transition: background 0.3s ease;
-}
-
-.list-header:hover {
-    background: rgba(0, 0, 0, 0.15);
-}
-
-.list-title {
-    color: white;
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
-.list-icon {
-    color: white;
-    transition: transform 0.3s ease;
-    font-size: 1.5rem;
-}
-
-.list-icon.expanded {
-    transform: rotate(180deg);
-}
-
-.list-content {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.5s ease;
-}
-
-.list-content.expanded {
-    max-height: 500px;
-}
-
-.list-items {
-    padding: 20px;
     display: flex;
+    gap: 10px;
     flex-direction: column;
-    gap: 12px;
-}
-
-.list-item {
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-}
-
-.list-item:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateX(5px);
-    border-left-color: #6a11cb;
-}
-
-.item-icon {
-    font-size: 1.2rem;
-    color: #6a11cb;
-}
-
-.item-text {
-    flex: 1;
-}
-
-
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .container {
-        padding: 20px;
-    }
-
-    h1 {
-        font-size: 2rem;
-    }
-
-    .list-title {
-        font-size: 1.2rem;
-    }
 }
 </style>
