@@ -22,11 +22,6 @@ const lists = ref([
     title: 'petpet',
     url: 'https://benisland.neocities.org/petpet/',
     icon: 'favicon.ico'
-  },
-  {
-    title: 'Emojiall',
-    url: 'https://www.emojiall.com/',
-    icon: 'favicon.ico'
   }
 ])
 
