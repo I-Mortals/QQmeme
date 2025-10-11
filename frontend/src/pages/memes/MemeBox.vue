@@ -4,7 +4,6 @@ import { store } from '@/store'
 import { Tab, TabPanel } from '@/components/tab'
 import MemePane from './MemePane.vue'
 import StarMemePane from './StarMemePane.vue'
-import TelegramStickerPane from './TelegramStickerPane.vue'
 import type { TabItem } from '@/components/tab/types'
 import { joinShowImgPath } from '@/utils/path'
 import { VueDraggable } from 'vue-draggable-plus'
@@ -25,12 +24,6 @@ const tabsConfig = computed(() => {
       label: '收藏夹',
       icon: '⭐',
       component: StarMemePane
-    },
-    {
-      key: 'telegramStickers',
-      label: 'Telegram',
-      icon: '📱',
-      component: TelegramStickerPane
     }
   ]
 
@@ -155,7 +148,7 @@ const handleSaveTabOrderSuccess = () => {
             <div class="star-icon">⭐</div>
           </div>
 
-          <div
+          <!-- <div
             @click="store.handleTabClick('telegramStickers')"
             :class="[
               'tab-item',
@@ -163,7 +156,7 @@ const handleSaveTabOrderSuccess = () => {
               { 'tab-item-action': store.tabCurrent === 'telegramStickers' }
             ]">
             <div class="telegram-icon">📱</div>
-          </div>
+          </div> -->
         </div>
       </template>
 

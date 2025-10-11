@@ -5,6 +5,8 @@ import MemeBox from '@/pages/memes/MemeBox.vue'
 import SettingPane from '@/pages/settings/SettingPane.vue'
 import UsageGuide from '@/pages/UsageGuide.vue'
 import type { TabItem } from '@/components/tab/types'
+import MemeLib from '@/pages/memelib/index.vue'
+import TelegramStickerPane from '@/pages/memes/TelegramStickerPane.vue'
 
 const mainTabsConfig = [
   {
@@ -24,6 +26,18 @@ const mainTabsConfig = [
     label: '使用说明',
     icon: '📖',
     component: UsageGuide
+  },
+  {
+    key: 'telegramStickers',
+    label: 'Telegram',
+    icon: '📱',
+    component: TelegramStickerPane
+  },
+  {
+    key: 'meme-lib',
+    label: '表情包库',
+    icon: '😀',
+    component: MemeLib
   }
 ]
 

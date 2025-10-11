@@ -22,7 +22,8 @@ const settingsConfig = [
     title: '外观设置',
     icon: '🎨',
     component: AppearanceSettings
-  }
+  },
+
 ]
 
 const activeSection = ref('file-management')
