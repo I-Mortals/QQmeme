@@ -10,23 +10,20 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "lib": [
       "ESNext",
       "DOM"
     ],
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/pages/*": ["src/pages/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/store": ["src/store"]
+      "@/*": ["src/*"]
     },
     "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
-    "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue"
   ],

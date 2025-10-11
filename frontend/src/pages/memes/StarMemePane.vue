@@ -124,8 +124,10 @@ const handleDragEnd = (event: any) => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .star-grid {
-  background: var(--theme-background);
+  background: @rgb-b1;
   width: 100%;
   padding: 1rem;
   position: relative;
@@ -138,12 +140,12 @@ const handleDragEnd = (event: any) => {
   justify-content: center;
   height: 60vh;
   text-align: center;
-  color: #6b7280;
+  color: @rgb-bc;
 
   h3 {
     font-size: 1.5rem;
     margin: 0 0 0.5rem 0;
-    color: #374151;
+    color: @rgb-bc;
   }
 
   p {
@@ -173,10 +175,10 @@ const handleDragEnd = (event: any) => {
   border-radius: 1rem;
   position: relative;
   cursor: grab;
-  background: rgba(255, 255, 255, 0.8);
+  background: @rgb-b1;
   padding: 0.75rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(232, 232, 232, 0.8);
+  border: 1px solid @rgb-b3;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:active {
@@ -185,7 +187,7 @@ const handleDragEnd = (event: any) => {
 
   &:hover {
     transform: translateY(-4px) scale(1.02);
-    border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+    border-color: rgba(@p, 0.3);
   }
 }
 
@@ -209,16 +211,16 @@ const handleDragEnd = (event: any) => {
 .star-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: @rgb-bc;
   word-break: break-all;
 }
 
 .star-from {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: @rgb-bc;
   opacity: 0.8;
+  word-break: break-all;
 }
-
 
 .star-list-move,
 .star-list-enter-active,
@@ -239,7 +241,7 @@ const handleDragEnd = (event: any) => {
 
 .star-item-ghost {
   opacity: 0.5;
-  background: rgba(59, 130, 246, 0.1);
-  border: 2px dashed var(--theme-primary);
+  background: rgba(@p, 0.1);
+  border: 2px dashed @rgb-p;
 }
 </style>

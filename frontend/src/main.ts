@@ -9,5 +9,4 @@ const app = createApp(App)
 app.directive('clickOutside', clickOutside)
 
 initializeStoreFromCache()
-
 app.mount('#app')

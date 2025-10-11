@@ -7,6 +7,7 @@ import UsageGuide from '@/pages/UsageGuide.vue'
 import type { TabItem } from '@/components/tab/types'
 import MemeLib from '@/pages/memelib/index.vue'
 import TelegramStickerPane from '@/pages/memes/TelegramStickerPane.vue'
+import ThemeSwitch from './components/common/ThemeSwitch.vue'
 
 const mainTabsConfig = [
   {
@@ -56,6 +57,11 @@ const activeTab = ref('memes')
       v-model="activeTab"
       :tabs="mainTabs"
     >
+
+      <template #fixedRight>
+        <ThemeSwitch/>
+      </template>
+
       <TabPanel
         v-for="value in mainTabsConfig"
         :key="value.key"

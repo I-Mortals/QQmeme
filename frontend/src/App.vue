@@ -9,7 +9,3 @@ import ContextMenu from '@/components/ContextMenu.vue'
   <Toast/>
   <ContextMenu />
 </template>
-
-<style>
-
-</style>

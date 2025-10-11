@@ -1,4 +1,4 @@
-import { converter, formatHex, formatHex8, Hsl, hsl, parse, Rgb } from 'culori'
+import { converter, formatHex, formatHex8, Hsl, hsl, interpolate, parse, Rgb, wcagContrast } from 'culori'
 
 export const DEFAULT_COLOR: Hsl = {
   mode: 'hsl',
@@ -42,11 +42,16 @@ export const hslToRgb = (h: number = 0, s: number, l: number): Rgb => {
 export const parseRgb = (rgbColor: Rgb) => {
   const { r, g, b, alpha } = rgbColor
   return {
-    r: Math.round(r * 255) || 255,
-    g: Math.round(g * 255) || 255,
-    b: Math.round(b * 255) || 255,
+    r: Math.round(r * 255) || 0,
+    g: Math.round(g * 255) || 0,
+    b: Math.round(b * 255) || 0,
     alpha: alpha ?? 1
   }
+}
+
+export const parseRgbStr = (rgbColor: string) => {
+  const { r, g, b } = colorToRgb(rgbColor)
+  return `${r},${g},${b}`
 }
 
 export const colorToHsl = (colorValue: string) => {
@@ -58,3 +63,20 @@ export const colorToRgb = (colorValue: string) => {
 }
 
 export const clampValue = (value: number, min: number, max: number): number => Math.max(min, Math.min(max, value))
+
+export const isMoreDark = (color: string) => {
+  /*
+  * 对比度指的是颜色之间的差异程度。高对比度表示两种颜色之间的差异很大，低对比度则表示颜色之间的差异较小。
+  * 如果待判断的颜色与亮色（白色）之间的对比度更高，则该颜色趋近于暗色。
+  * 如果待判断的颜色与暗色（黑色）之间的对比度更高，则该颜色趋近于亮色。
+  * color 与 black 的对比度越低，越趋近于暗色，否则更趋近于亮色
+  */
+  return wcagContrast(color, 'black') < wcagContrast(color, 'white')
+}
+
+export const getInterpolateByContrast = (
+  color: string,
+  percent: number
+) => {
+  return parseRgb(interpolate([color, isMoreDark(color) ? 'white' : 'black'], 'rgb')(percent))
+}

@@ -34,7 +34,12 @@ const currentComponent = computed(() => {
 })
 
 const switchSection = (sectionId: string) => {
+  const oldSection = activeSection.value
   activeSection.value = sectionId
+  // 触发全局section切换事件
+  document.dispatchEvent(new CustomEvent('section-change', {
+    detail: { newSection: sectionId, oldSection }
+  }))
 }
 
 onMounted(() => {
@@ -72,9 +77,11 @@ onMounted(() => {
 
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .settings-page {
   height: 100%;
-  background: #f5f5f5;
+  background: rgba(var(--bc), 0.06);
   display: flex;
   flex-direction: column;
 }
@@ -82,7 +89,7 @@ onMounted(() => {
 .settings-container {
   display: flex;
   flex: 1;
-  background: #ffffff;
+  background: @rgb-b1;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   width: 100%;
   position: relative;
@@ -92,8 +99,8 @@ onMounted(() => {
 .settings-sidebar {
   width: 180px;
   min-width: 180px;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
+  background: @rgb-b1;
+  border-right: 1px solid @rgb-b3;
   padding: 0.5rem 0;
   flex-shrink: 0;
   position: absolute;
@@ -111,17 +118,17 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
-  color: #374151;
+  color: @rgb-bc;
 
   &:hover {
-    background: #f3f4f6;
-    color: #1f2937;
+    background: rgba(var(--bc), 0.06);
+    color: @rgb-bc;
   }
 
   &.active {
-    background: #eff6ff;
-    border-left-color: #3b82f6;
-    color: #1d4ed8;
+    background: rgba(@p, 0.1);
+    border-left-color: @rgb-p;
+    color: @rgb-p;
     font-weight: 600;
   }
 }

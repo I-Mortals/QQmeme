@@ -480,6 +480,8 @@ onMounted(() => {
   </div>
 </template>
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .color-picker {
   position: relative;
   display: inline-block;
@@ -501,7 +503,7 @@ onMounted(() => {
   height: 1.5rem;
   border-radius: 0.25rem;
   border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='10' height='10'%3e%3crect width='10' height='10' fill='%23fff'/%3e%3crect width='5' height='5' fill='%23ccc'/%3e%3crect x='5' y='5' width='5' height='5' fill='%23ccc'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100' height='100' fill='url(%23a)'/%3e%3c/svg%3e");
   overflow: hidden;
 }
@@ -522,12 +524,13 @@ onMounted(() => {
 
 .color-picker-popup {
   z-index: 9999;
-  background: white;
+  background: @rgb-b1;
   border-radius: 0.5rem;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   min-width: 240px;
   max-width: 280px;
+  border: 1px solid @rgb-b3;
 }
 
 .fade-enter-active,
@@ -661,7 +664,7 @@ onMounted(() => {
   label {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #6b7280;
+    color: @rgb-bc;
     text-align: center;
   }
 }
@@ -671,21 +674,22 @@ onMounted(() => {
 .alpha-input-field {
   width: 100%;
   padding: 0.375rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid @rgb-b3;
   border-radius: 0.25rem;
   font-size: 0.75rem;
   text-align: center;
   transition: all 0.2s ease;
-  background: white;
+  background: @rgb-b1;
+  color: @rgb-bc;
 
   &:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: @rgb-p;
+    box-shadow: 0 0 0 3px rgba(@p, 0.1);
   }
 
   &:hover:not(:focus) {
-    border-color: #9ca3af;
+    border-color: @rgb-b3;
   }
 }
 
@@ -694,15 +698,15 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  background: #f9fafb;
+  background: rgba(var(--bc), 0.06);
   border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid @rgb-b3;
 }
 
 .preview-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: @rgb-bc;
 }
 
 .preview-color-container {
@@ -711,7 +715,7 @@ onMounted(() => {
   height: 1.5rem;
   border-radius: 0.25rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   background-image: url("data:image/svg+xml,%3csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='a' patternUnits='userSpaceOnUse' width='10' height='10'%3e%3crect width='10' height='10' fill='%23fff'/%3e%3crect width='5' height='5' fill='%23ccc'/%3e%3crect x='5' y='5' width='5' height='5' fill='%23ccc'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100' height='100' fill='url(%23a)'/%3e%3c/svg%3e");
   overflow: hidden;
 }
@@ -734,7 +738,7 @@ onMounted(() => {
   font-size: 0.75rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-weight: 500;
-  color: #6b7280;
+  color: @rgb-bc;
 }
 
 </style>

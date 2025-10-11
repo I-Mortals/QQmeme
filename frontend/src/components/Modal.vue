@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
+import Button from './Button.vue'
 
 interface ModalProps {
   visible: boolean
@@ -8,18 +9,44 @@ interface ModalProps {
   closable?: boolean
   maskClosable?: boolean
   showCloseButton?: boolean
+  cancelBtn?: {
+    text?: string
+    disabled?: boolean
+    loading?: boolean
+  }
+  confirmBtn?: {
+    text?: string
+    disabled?: boolean
+    loading?: boolean
+  }
+  showCancel?: boolean
+  showConfirm?: boolean
 }
 
 const props = withDefaults(defineProps<ModalProps>(), {
   title: '',
   closable: true,
   maskClosable: true,
-  showCloseButton: true
+  showCloseButton: true,
+  cancelBtn: () => ({
+    text: '取消',
+    disabled: false,
+    loading: false
+  }),
+  confirmBtn: () => ({
+    text: '确定',
+    disabled: false,
+    loading: false
+  }),
+  showCancel: true,
+  showConfirm: true
 })
 
 const emit = defineEmits<{
   close: []
   'update:visible': [value: boolean]
+  cancel: []
+  confirm: []
 }>()
 
 const handleClose = () => {
@@ -39,6 +66,14 @@ const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && props.visible && props.closable) {
     handleClose()
   }
+}
+
+const handleCancel = () => {
+  emit('cancel')
+}
+
+const handleConfirm = () => {
+  emit('confirm')
 }
 
 onMounted(() => {
@@ -63,14 +98,14 @@ onUnmounted(() => {
           @click.stop
         >
           <div v-if="title || showCloseButton" class="modal-header">
-            <h2 v-if="title" class="modal-title">{{ title }}</h2>
+            <div v-if="title" class="modal-title">{{ title }}</div>
             <button
               v-if="showCloseButton"
               class="close-btn"
               @click="handleClose"
               aria-label="关闭"
             >
-              <Icon icon="lucide:x" :width="24" :height="24" />
+              <Icon icon="lucide:x" :width="24" :height="24"/>
             </button>
           </div>
 
@@ -78,8 +113,29 @@ onUnmounted(() => {
             <slot></slot>
           </div>
 
-          <div v-if="$slots.footer" class="modal-footer">
-            <slot name="footer"></slot>
+          <div v-if="$slots.footer || showCancel || showConfirm" class="modal-footer">
+            <slot name="footer">
+              <div v-if="showCancel || showConfirm" class="modal-actions">
+                <Button
+                  v-if="showCancel"
+                  variant="secondary"
+                  :disabled="cancelBtn?.disabled || cancelBtn?.loading"
+                  :loading="cancelBtn?.loading"
+                  @click="handleCancel"
+                >
+                  {{ cancelBtn?.text }}
+                </Button>
+                <Button
+                  v-if="showConfirm"
+                  variant="primary"
+                  :loading="confirmBtn?.loading"
+                  :disabled="confirmBtn?.disabled || confirmBtn?.loading"
+                  @click="handleConfirm"
+                >
+                  {{ confirmBtn?.text }}
+                </Button>
+              </div>
+            </slot>
           </div>
         </div>
       </div>
@@ -88,6 +144,8 @@ onUnmounted(() => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -102,28 +160,14 @@ onUnmounted(() => {
   justify-content: center;
   padding: 1rem;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center,
-      color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%,
-      transparent 70%);
-    pointer-events: none;
-  }
 }
 
 .modal-container {
-  background: white;
+  background: @rgb-b1;
   border-radius: 1rem;
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    0 8px 16px rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15),
+  0 8px 16px rgba(0, 0, 0, 0.1),
+  0 0 0 1px rgba(255, 255, 255, 0.1);
   width: 100%;
   max-width: 600px;
   max-height: none;
@@ -131,59 +175,29 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--theme-primary) 30%, transparent) 50%,
-      transparent 100%);
-  }
-
+  border: 1px solid @rgb-b3;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem 1rem 0.625rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: var(--theme-primary);
-  color: white;
+  padding: 0.75rem 1rem 0.5rem;
+  border-bottom: 1px solid @rgb-b3;
+  background: @rgb-p;
+  color: @rgb-pc;
   flex-shrink: 0;
   position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.3) 50%,
-      transparent 100%);
-  }
 }
 
 .modal-title {
-  font-size: 1.375rem;
-  font-weight: 700;
-  margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  letter-spacing: -0.025em;
+  font-size: 1.25rem;
+  font-weight: bold;
 }
 
 .close-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(@pc, 0.15);
+  border: 1px solid rgba(@pc, 0.2);
   border-radius: 0.5rem;
   width: 2.5rem;
   height: 2.5rem;
@@ -191,54 +205,44 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: white;
+  color: @rgb-pc;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(@pc, 0.25);
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+    border-color: rgba(@pc, 0.4);
   }
 
   &:active {
     transform: scale(0.95) rotate(90deg);
-    transition: all 0.1s ease;
   }
 }
 
 .modal-body {
-  padding: 0.875rem;
+  padding: 0.75rem;
   flex: 1;
   overflow-y: auto;
-  background: #fafbfc;
+  background: @rgb-b1;
+  color: @rgb-bc;
 }
 
 .modal-footer {
-  padding: 0.625rem 0.875rem 0.875rem;
-  border-top: 1px solid color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  padding: 0.5rem 0.875rem 0.75rem;
+  border-top: 1px solid @rgb-b3;
   display: flex;
   justify-content: flex-end;
   gap: 0.625rem;
-  background: #f8fafc;
+  background: @rgb-b1;
   flex-shrink: 0;
   position: relative;
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--theme-primary) 20%, transparent) 50%,
-      transparent 100%);
-  }
-
-  > * {
-  }
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .modal-enter-active,

@@ -40,8 +40,8 @@ onMounted(() => {
     :class="[
       'tab-panel',
       {
-        'tab-panel--active': props.active,
-        'tab-panel--loaded': hasLoaded
+        'tab-panel-active': props.active,
+        'tab-panel-loaded': hasLoaded
       },
       props.class
     ]"
@@ -58,11 +58,11 @@ onMounted(() => {
   position: relative;
   animation: fadeIn 0.3s ease-in-out;
 
-  &--active {
+  &.tab-panel-active {
     display: block;
   }
 
-  &--loaded {
+  &.tab-panel-loaded {
     opacity: 1;
   }
 }

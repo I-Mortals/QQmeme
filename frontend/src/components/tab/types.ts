@@ -11,6 +11,8 @@ export interface TabItem {
   data?: any
   /** tab对应的组件 */
   component?: any
+  /** tab对应的组件props */
+  props?: any
 }
 
 export interface TabProps {

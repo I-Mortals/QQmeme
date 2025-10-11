@@ -20,6 +20,7 @@ type MemeFile struct {
 	ctx        context.Context // Wails应用上下文
 	fileUtils  *utils.FileUtils
 	imageUtils *utils.ImageUtils
+	downloader *sticker.TelegramDownloader
 }
 
 // NewMemeFile 创建新的MemeFile实例
@@ -343,7 +344,7 @@ func (m *MemeFile) cleanFolderName(folderName string) string {
 }
 
 func (m *MemeFile) DownloadTgStickerSet(stickerSetName string, savePath string, botToken string, proxyURL string, needProxy bool) error {
-	downloader := sticker.NewTelegramDownloader(m.ctx, botToken, proxyURL, needProxy)
+	m.downloader = sticker.NewTelegramDownloader(m.ctx, botToken, proxyURL, needProxy)
 
 	progressCallback := func(progress sticker.DownloadProgress) {
 		if m.ctx != nil {
@@ -355,5 +356,41 @@ func (m *MemeFile) DownloadTgStickerSet(stickerSetName string, savePath string, 
 		}
 	}
 
-	return downloader.DownloadTgStickerSet(stickerSetName, savePath, progressCallback)
+	return m.downloader.DownloadTgStickerSet(stickerSetName, savePath, progressCallback)
+}
+
+// DeleteTgStickerSet 删除Telegram贴纸集合文件夹
+func (m *MemeFile) DeleteTgStickerSet(rootPath string, stickerSetName string) error {
+	// 构建贴纸集合的文件夹路径
+	stickerSetPath := filepath.Join(rootPath, stickerSetName)
+
+	// 检查文件夹是否存在
+	if _, err := os.Stat(stickerSetPath); os.IsNotExist(err) {
+		return fmt.Errorf("贴纸集合文件夹不存在: %s", stickerSetName)
+	}
+
+	// 删除整个文件夹
+	if err := os.RemoveAll(stickerSetPath); err != nil {
+		return fmt.Errorf("删除贴纸集合失败: %v", err)
+	}
+
+	return nil
+}
+
+// DeleteMemeFile 删除单个表情包文件
+func (m *MemeFile) DeleteMemeFile(rootPath string, folderCode string, fileName string) error {
+	// 构建文件的完整路径
+	filePath := filepath.Join(rootPath, folderCode, fileName)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return fmt.Errorf("文件不存在: %s", fileName)
+	}
+
+	// 删除文件
+	if err := os.Remove(filePath); err != nil {
+		return fmt.Errorf("删除文件失败: %v", err)
+	}
+
+	return nil
 }

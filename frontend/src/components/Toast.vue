@@ -33,6 +33,8 @@ export interface ToastItem {
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .toast-container {
   position: fixed;
   top: 20px;
@@ -46,45 +48,46 @@ export interface ToastItem {
 }
 
 .toast {
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
+  background: @rgb-b1;
+  color: @rgb-bc;
   padding: 12px 20px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   min-width: 200px;
   max-width: 100%;
+  border: 1px solid @rgb-b3;
 
   &-success {
     .toast-icon {
-      background: #4ade80;
+      background: @rgb-s;
     }
   }
 
   &-error {
     .toast-icon {
-      background: #ef4444;
+      background: @rgb-e;
     }
   }
 
   &-warning {
     .toast-icon {
-      background: #f59e0b;
+      background: @rgb-w;
     }
   }
 
   &-info {
     .toast-icon {
-      background: #3b82f6;
+      background: @rgb-i;
     }
   }
 }
 
 .toast-icon {
-  background: #4ade80;
+  background: @rgb-s;
   color: white;
   width: 20px;
   height: 20px;

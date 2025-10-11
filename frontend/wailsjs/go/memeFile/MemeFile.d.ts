@@ -3,6 +3,10 @@
 import {memeFile} from '../models';
 import {context} from '../models';
 
+export function DeleteMemeFile(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function DeleteTgStickerSet(arg1:string,arg2:string):Promise<void>;
+
 export function DownloadTgStickerSet(arg1:string,arg2:string,arg3:string,arg4:string,arg5:boolean):Promise<void>;
 
 export function GenerateAllMemePath(arg1:string):Promise<Array<memeFile.MemeInfo>>;

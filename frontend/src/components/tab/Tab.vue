@@ -21,6 +21,10 @@ watch(activeKey, (newKey, oldKey) => {
   emit('update:modelValue', newKey)
   if (oldKey) {
     emit('tab-change', newKey, oldKey)
+    // 触发全局tab切换事件
+    document.dispatchEvent(new CustomEvent('tab-change', {
+      detail: { newKey, oldKey }
+    }))
   }
 })
 
@@ -76,7 +80,7 @@ const slots = defineSlots<{
   <div
     :class="[
       'tab-container',
-      `tab-container--${headerPosition}`,
+      `tab-container-${headerPosition}`,
       props.class
     ]"
     :style="style"
@@ -157,15 +161,17 @@ const slots = defineSlots<{
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .tab-container {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: var(--theme-background);
+  background: @rgb-b1;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
 
-  &--bottom {
+  &.tab-container-bottom {
     flex-direction: column-reverse;
   }
 }
@@ -174,7 +180,7 @@ const slots = defineSlots<{
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: var(--theme-background);
+  background: @rgb-b1;
 }
 
 </style>

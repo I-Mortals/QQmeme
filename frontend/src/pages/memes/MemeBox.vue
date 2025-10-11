@@ -10,25 +10,8 @@ import { VueDraggable } from 'vue-draggable-plus'
 import SaveTabMemeOrderModal from './modal/SaveTabMemeOrderModal.vue'
 import SaveTabOrderModal from './modal/SaveTabOrderModal.vue'
 
-const tabsConfig = computed(() => {
-  const configItems: Array<{
-    key: string
-    label: string
-    icon: string
-    component: any
-    data?: any
-    props?: any
-  }> = [
-    {
-      key: 'starMemes',
-      label: '收藏夹',
-      icon: '⭐',
-      component: StarMemePane
-    }
-  ]
-
-  store.allMemesPath.forEach(memeInfo => {
-    configItems.push({
+const tabs = computed<TabItem[]>(() => {
+  return store.allMemesPath.map(memeInfo => ({
       key: memeInfo.code,
       label: memeInfo.name,
       icon: memeInfo.icon,
@@ -36,18 +19,19 @@ const tabsConfig = computed(() => {
       component: MemePane,
       props: { memeInfo }
     })
-  })
-
-  return configItems
+  )
 })
 
-const tabs = computed<TabItem[]>(() => {
-  return tabsConfig.value.map(config => ({
-    key: config.key,
-    label: config.label,
-    icon: config.icon,
-    data: config.data
-  }))
+const tabsConfig = computed(() => {
+  return [
+    ...tabs.value,
+    {
+      key: 'starMemes',
+      label: '收藏夹',
+      icon: '⭐',
+      component: StarMemePane
+    }
+  ]
 })
 
 const topTabActive = ref('')
@@ -197,7 +181,7 @@ const handleSaveTabOrderSuccess = () => {
       >
         <component
           :is="config.component"
-          v-bind="config.props || {}"
+          v-bind="config.props"
         />
       </TabPanel>
     </Tab>
@@ -221,6 +205,8 @@ const handleSaveTabOrderSuccess = () => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .meme-box {
   width: 100%;
   height: 100%;
@@ -244,21 +230,15 @@ const handleSaveTabOrderSuccess = () => {
 }
 
 :deep(.tab-header) {
-  background: var(--theme-primary);
+  background: @rgb-p;
   padding: 0 .25rem;
-}
-
-.tab-fixed-list {
-  display: flex;
-  gap: .25rem;
-  align-items: center;
 }
 
 .tab-list {
   display: flex;
   gap: 0.25rem;
   align-items: center;
-  padding: .125rem 0;
+  padding: .25rem 0;
 
   &-inner {
     display: flex;
@@ -286,7 +266,7 @@ const handleSaveTabOrderSuccess = () => {
 
 .tab-fixed-list .tab-item,
 .tab-list .tab-item {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(@pc, 0.12);
   cursor: grab;
   height: 3rem;
   width: 3rem;
@@ -304,9 +284,9 @@ const handleSaveTabOrderSuccess = () => {
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15), 0 6px 16px rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(@pc, 0.2);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15), 0 6px 16px rgba(@pc, 0.1);
+    border-color: rgba(@pc, 0.3);
 
     img {
       transform: scale(1.08);
@@ -314,8 +294,8 @@ const handleSaveTabOrderSuccess = () => {
   }
 
   &-action {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(@pc, 0.25);
+    border-color: rgba(@pc, 0.6);
   }
 
   &-changed {
@@ -328,14 +308,14 @@ const handleSaveTabOrderSuccess = () => {
       right: -2px;
       width: 12px;
       height: 12px;
-      background: #ff6b6b;
+      background: @rgb-e;
       border-radius: 50%;
       font-size: 8px;
-      color: white;
+      color: @rgb-ec;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid rgba(255, 255, 255, 0.8);
+      border: 2px solid rgba(@pc, 0.8);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
   }
@@ -348,18 +328,23 @@ const handleSaveTabOrderSuccess = () => {
     object-fit: cover;
     border-radius: 0.375rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: @rgb-b1;
   }
 }
 
 .tab-item-ghost {
   opacity: 0.5;
   transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(@pc, 0.3);
+  border-color: rgba(@pc, 0.5);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
 .tab-fixed-list {
+  display: flex;
+  gap: .25rem;
+  align-items: center;
+
   .star-tab-item,
   .telegram-tab-item {
     cursor: pointer;

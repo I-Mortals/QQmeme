@@ -68,16 +68,20 @@ const handleClick = (event: MouseEvent) => {
   </button>
 </template>
 
-<style lang="less" scoped>.button-variant(@type, @bg, @text, @shadow: 0.1, @hover-shadow: 0.2) {
+<style lang="less" scoped>
+@import '@/styles/variables.less';
+
+.button-variant(@type, @bg, @text, @shadow: 0.08, @hover-shadow: 0.12) {
   .btn-@{type} {
     background: @bg;
     color: @text;
-    box-shadow: 0 4px 6px fade(@bg, percentage(@shadow));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, @shadow), 0 1px 2px rgba(0, 0, 0, 0.04);
 
     &:hover:not(.btn-disabled) {
-      background: darken(@bg, 10%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 15px fade(@bg, percentage(@hover-shadow));
+      background: @bg;
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, @hover-shadow), 0 2px 4px rgba(0, 0, 0, 0.08);
     }
 
     &:active:not(.btn-disabled) {
@@ -90,17 +94,18 @@ const handleClick = (event: MouseEvent) => {
     }
   }
 }
-.button-variant(primary, #005eec, white, 0.1, 0.2);
-.button-variant(secondary, #f1f5f9, #475569, 0, 0);
-.button-variant(danger, #ef4444, white, 0.3, 0.4);
-.button-variant(success, #10b981, white, 0.3, 0.4);
-.button-variant(warning, #f59e0b, white, 0.3, 0.4);
+
+.button-variant(primary, @rgb-p, @rgb-pc);
+.button-variant(secondary, @rgb-b2, @rgb-bc);
+.button-variant(danger, @rgb-e, @rgb-ec);
+.button-variant(success, @rgb-s, @rgb-sc);
+.button-variant(warning, @rgb-w, @rgb-wc);
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
+  gap: 0.25rem;
   border: none;
   border-radius: 0.375rem;
   font-weight: 600;

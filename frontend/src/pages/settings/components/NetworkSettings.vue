@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
 import { store } from '@/store'
 
 const botTokenInput = ref(store.botToken)
@@ -62,17 +63,18 @@ const toggleProxy = () => {
           <span class="label-desc">用于获取Telegram贴纸包的机器人Token</span>
         </div>
         <div class="setting-control">
-          <div class="input-group">
-            <input
-              v-model="botTokenInput"
-              type="text"
-              placeholder="请输入Bot Token"
-              class="config-input"
-            />
-            <Button variant="primary" @click="saveBotToken">
-              保存
-            </Button>
-          </div>
+          <Input
+            v-model="botTokenInput"
+            type="text"
+            placeholder="请输入Bot Token"
+            class="config-input"
+          >
+            <template #append>
+              <Button variant="primary" @click="saveBotToken">
+                保存
+              </Button>
+            </template>
+          </Input>
         </div>
       </div>
 
@@ -98,17 +100,18 @@ const toggleProxy = () => {
           <span class="label-desc">代理服务器的完整地址</span>
         </div>
         <div class="setting-control">
-          <div class="input-group">
-            <input
-              v-model="proxyURLInput"
-              type="text"
-              placeholder="http://127.0.0.1:7890"
-              class="config-input"
-            />
-            <Button variant="primary" @click="saveProxySettings">
-              保存
-            </Button>
-          </div>
+          <Input
+            v-model="proxyURLInput"
+            type="text"
+            placeholder="http://127.0.0.1:7890"
+            class="config-input"
+          >
+            <template #append>
+              <Button variant="primary" @click="saveProxySettings">
+                保存
+              </Button>
+            </template>
+          </Input>
         </div>
       </div>
     </div>
@@ -116,6 +119,8 @@ const toggleProxy = () => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .content-section {
   margin-bottom: 1.5rem;
 
@@ -127,16 +132,16 @@ const toggleProxy = () => {
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: @rgb-bc;
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid @rgb-b3;
 }
 
 .setting-group {
-  background: #ffffff;
+  background: @rgb-b1;
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid @rgb-b3;
   overflow: hidden;
 }
 
@@ -144,7 +149,7 @@ const toggleProxy = () => {
   display: flex;
   align-items: center;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid @rgb-b3;
 
   &:last-child {
     border-bottom: none;
@@ -160,14 +165,15 @@ const toggleProxy = () => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: @rgb-bc;
   margin-bottom: 0.25rem;
 }
 
 .label-desc {
   display: block;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: @rgb-bc;
+  opacity: 0.7;
   line-height: 1.4;
 }
 
@@ -176,16 +182,8 @@ const toggleProxy = () => {
   margin-left: 1rem;
 }
 
-.input-group {
-  display: flex;
-  align-items: stretch;
-  gap: 0.75rem;
-  min-width: 300px;
-}
-
 .config-input {
-  flex: 1;
-  min-width: 0;
+  min-width: 300px;
 }
 
 .proxy-controls {
@@ -198,7 +196,7 @@ const toggleProxy = () => {
   position: relative;
   width: 44px;
   height: 24px;
-  background: #d1d5db;
+  background: @rgb-b3;
   border-radius: 12px;
   cursor: pointer;
   transition: background-color 0.3s ease;
@@ -210,10 +208,10 @@ const toggleProxy = () => {
   left: 1.5px;
   width: 20px;
   height: 20px;
-  background: #ffffff;
+  background: @rgb-b1;
   border-radius: 50%;
   transition: transform 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 
   &.active {
     transform: translateX(20px);
@@ -221,12 +219,12 @@ const toggleProxy = () => {
 }
 
 .toggle-switch:has(.toggle-slider.active) {
-  background: #005eec;
+  background: @rgb-p;
 }
 
 .toggle-label {
   font-size: 0.875rem;
-  color: #374151;
+  color: @rgb-bc;
   font-weight: 500;
 }
 </style>

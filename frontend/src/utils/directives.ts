@@ -11,11 +11,7 @@ export const clickOutside: Directive = {
       }
     }
     
-    const addListener = () => {
-      document.addEventListener('click', handler, true)
-    }
-    
-    setTimeout(addListener, 100)
+    document.addEventListener('click', handler, true)
     el._clickOutsideHandler = handler
   },
   

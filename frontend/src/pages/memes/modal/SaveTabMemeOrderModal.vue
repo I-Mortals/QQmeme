@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Modal from '@/components/Modal.vue'
-import Button from '@/components/Button.vue'
 import { RenameFilesInOrder } from '../../../../wailsjs/go/memeFile/MemeFile'
 import { store } from '@/store'
 
@@ -72,7 +71,18 @@ const confirmSaveOrder = async () => {
     title="保存当前顺序"
     :closable="!isRenaming"
     :mask-closable="!isRenaming"
+    :cancelBtn="{
+      text: '取消',
+      disabled: isRenaming
+    }"
+    :confirmBtn="{
+      text: '确定保存',
+      loading: isRenaming,
+      disabled: isRenaming
+    }"
     @close="hideModal"
+    @cancel="hideModal"
+    @confirm="confirmSaveOrder"
   >
     <div class="confirm-content">
       <div class="warning-icon">⚠️</div>
@@ -85,25 +95,12 @@ const confirmSaveOrder = async () => {
       </div>
     </div>
 
-    <template #footer>
-      <Button
-        variant="secondary"
-        @click="hideModal"
-        :disabled="isRenaming">
-        取消
-      </Button>
-      <Button
-        variant="primary"
-        @click="confirmSaveOrder"
-        :loading="isRenaming"
-        :disabled="isRenaming">
-        {{ isRenaming ? '保存中...' : '确定保存' }}
-      </Button>
-    </template>
   </Modal>
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .confirm-content {
   display: flex;
   align-items: flex-start;
@@ -124,25 +121,26 @@ const confirmSaveOrder = async () => {
 .main-text {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #374151;
+  color: @rgb-bc;
   margin: 0 0 0.75rem 0;
 }
 
 .detail-text {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: @rgb-bc;
   margin: 0 0 0.75rem 0;
   line-height: 1.5;
+  opacity: 0.8;
 
   strong {
-    color: var(--theme-primary);
+    color: @rgb-p;
     font-weight: 600;
   }
 }
 
 .warning-text {
   font-size: 0.875rem;
-  color: #dc2626;
+  color: @rgb-e;
   margin: 0;
   font-weight: 500;
 }

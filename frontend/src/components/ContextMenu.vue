@@ -83,21 +83,23 @@ const handleMenuItemClick = (action: () => void) => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .context-menu {
   position: fixed;
-  background: rgba(255, 255, 255);
+  background: @rgb-b1;
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   z-index: 1001;
   min-width: 120px;
   padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid @rgb-b3;
 }
 
 .menu-item {
   padding: 6px;
   border-radius: 6px;
-  color: #374151;
+  color: @rgb-bc;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -107,8 +109,8 @@ const handleMenuItemClick = (action: () => void) => {
   font-weight: 500;
 
   &:hover {
-    background: rgba(59, 130, 246, 0.08);
-    color: #1d4ed8;
+    background: @rgb-pc;
+    color: @rgb-p;
   }
 }
 
@@ -119,7 +121,7 @@ const handleMenuItemClick = (action: () => void) => {
 
 .menu-separator {
   height: 1px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--bc), 0.06);
   margin: 4px 8px;
 }
 

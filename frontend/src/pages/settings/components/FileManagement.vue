@@ -2,6 +2,7 @@
 import { GenerateAllMemePath, SelectRootDir } from '../../../../wailsjs/go/memeFile/MemeFile'
 import { store } from '@/store'
 import Button from '@/components/Button.vue'
+import Input from '@/components/Input.vue'
 
 const selectRoot = async () => {
   const path = await SelectRootDir()
@@ -33,18 +34,24 @@ const refreshMemes = () => {
           <span class="label-desc">选择表情包存储的主目录</span>
         </div>
         <div class="setting-control">
-          <div class="path-display">
-            <span class="path-text">{{ store.rootPath || '请选择主目录' }}</span>
-            <Button
-              variant="primary"
-              icon="lucide:folder-up"
-              @click="selectRoot">
-              选择目录
-            </Button>
-          </div>
+          <Input
+            :model-value="store.rootPath || '请选择主目录'"
+            readonly
+            placeholder="请选择主目录"
+            class="path-input"
+          >
+            <template #append>
+              <Button
+                variant="primary"
+                icon="lucide:folder-up"
+                @click="selectRoot">
+                选择目录
+              </Button>
+            </template>
+          </Input>
         </div>
       </div>
-      
+
       <div class="setting-item">
         <div class="setting-label">
           <span class="label-text">缓存管理</span>
@@ -72,6 +79,8 @@ const refreshMemes = () => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .content-section {
   margin-bottom: 1.5rem;
 
@@ -83,16 +92,16 @@ const refreshMemes = () => {
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: @rgb-bc;
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid @rgb-b3;
 }
 
 .setting-group {
-  background: #ffffff;
+  background: @rgb-b1;
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid @rgb-b3;
   overflow: hidden;
 }
 
@@ -100,7 +109,7 @@ const refreshMemes = () => {
   display: flex;
   align-items: center;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid @rgb-b3;
 
   &:last-child {
     border-bottom: none;
@@ -116,14 +125,15 @@ const refreshMemes = () => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: @rgb-bc;
   margin-bottom: 0.25rem;
 }
 
 .label-desc {
   display: block;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: @rgb-bc;
+  opacity: 0.7;
   line-height: 1.4;
 }
 
@@ -132,24 +142,8 @@ const refreshMemes = () => {
   margin-left: 1rem;
 }
 
-.path-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: #f8f9fa;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  padding: 0.5rem 0.75rem;
+.path-input {
   min-width: 300px;
-}
-
-.path-text {
-  flex: 1;
-  color: #6b7280;
-  font-size: 0.8125rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-  word-break: break-all;
-  line-height: 1.4;
 }
 
 .button-group {

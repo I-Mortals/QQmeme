@@ -1,23 +1,6 @@
 <script lang="ts" setup>
-import { store } from '@/store'
-import ColorPicker from '@/components/ColorPicker.vue'
-import { colorToRgb } from '@/utils/color'
+import ThemeSwitch from '@/components/common/ThemeSwitch.vue';
 
-const hexToRgbaStr = (hex: string): string => {
-  const { r, g, b, alpha} = colorToRgb(hex)
-  return `${r},${g},${b},${alpha}`
-}
-
-const setThemeColor = (type: string, rgba: string) => {
-  switch (type){
-    case 'theme':
-      store.setThemeColor(hexToRgbaStr(rgba))
-      break;
-    case 'bg':
-      store.setThemeBackgroundColor(hexToRgbaStr(rgba))
-      break;
-  }
-}
 </script>
 
 <template>
@@ -26,51 +9,11 @@ const setThemeColor = (type: string, rgba: string) => {
     <div class="setting-group">
       <div class="setting-item">
         <div class="setting-label">
-          <span class="label-text">主题色</span>
-          <span class="label-desc">自定义应用的主题颜色</span>
+          <span class="label-text">主题方案</span>
+          <span class="label-desc">选择应用的主题配色方案</span>
         </div>
-        <div class="setting-control">
-          <ColorPicker
-            :value="`rgba(${store.themeColor})`"
-            @update:value="(color) => {
-              setThemeColor('theme', color)
-            }">
-            <template #trigger="{ currentColor }">
-              <div class="color-picker-group">
-                <div class="color-preview-container">
-                  <div
-                    class="color-preview"
-                    :style="{ backgroundColor: currentColor }" />
-                </div>
-                <span class="color-hex">{{ currentColor }}</span>
-              </div>
-            </template>
-          </ColorPicker>
-        </div>
-      </div>
-
-      <div class="setting-item">
-        <div class="setting-label">
-          <span class="label-text">背景色</span>
-          <span class="label-desc">自定义应用的背景颜色</span>
-        </div>
-        <div class="setting-control">
-          <ColorPicker
-            :value="`rgba(${store.themeBackgroundColor})`"
-            @update:value="(color) => {
-              setThemeColor('bg', color)
-            }">
-            <template #trigger="{ currentColor }">
-              <div class="color-picker-group">
-                <div class="color-preview-container">
-                  <div
-                    class="color-preview"
-                    :style="{ backgroundColor: currentColor }" />
-                </div>
-                <span class="color-hex">{{ currentColor }}</span>
-              </div>
-            </template>
-          </ColorPicker>
+        <div class="setting-control theme-control">
+          <ThemeSwitch />
         </div>
       </div>
     </div>
@@ -78,6 +21,8 @@ const setThemeColor = (type: string, rgba: string) => {
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .content-section {
   margin-bottom: 1.5rem;
 
@@ -89,16 +34,16 @@ const setThemeColor = (type: string, rgba: string) => {
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: @rgb-bc;
   margin: 0 0 1rem 0;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid @rgb-b3;
 }
 
 .setting-group {
-  background: #ffffff;
+  background: @rgb-b1;
   border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid @rgb-b3;
   overflow: hidden;
 }
 
@@ -106,7 +51,8 @@ const setThemeColor = (type: string, rgba: string) => {
   display: flex;
   align-items: center;
   padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid @rgb-b3;
+  position: relative;
 
   &:last-child {
     border-bottom: none;
@@ -122,29 +68,33 @@ const setThemeColor = (type: string, rgba: string) => {
   display: block;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: @rgb-bc;
   margin-bottom: 0.25rem;
 }
 
 .label-desc {
   display: block;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: @rgb-bc;
+  opacity: 0.7;
   line-height: 1.4;
 }
 
 .setting-control {
   flex-shrink: 0;
   margin-left: 1rem;
-}
-
-.color-picker-group {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: .5rem;
 }
 
-.color-preview-container {
+.color-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-preview-wrapper {
   position: relative;
   width: 1.5rem;
   height: 1.5rem;
@@ -172,11 +122,11 @@ const setThemeColor = (type: string, rgba: string) => {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
-  background: #ffffff;
+  color: @rgb-bc;
+  background: @rgb-b1;
   padding: 0.375rem 0.625rem;
   border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid @rgb-b3;
   min-width: 4.5rem;
   text-align: center;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);

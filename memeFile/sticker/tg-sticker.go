@@ -18,6 +18,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	rlottie "github.com/yazmeyaa/go-rlottie"
@@ -54,12 +56,9 @@ type TelegramFileResponse struct {
 }
 
 type DownloadProgress struct {
-	Current      int     `json:"current"`
-	Total        int     `json:"total"`
-	Status       string  `json:"status"`
-	Percentage   float64 `json:"percentage"`
-	SuccessCount int     `json:"successCount"`
-	FailedCount  int     `json:"failedCount"`
+	Current int    `json:"current"`
+	Total   int    `json:"total"`
+	Status  string `json:"status"`
 }
 
 type TelegramDownloader struct {
@@ -123,9 +122,7 @@ func (td *TelegramDownloader) DownloadTgStickerSet(stickerSetName string, savePa
 		return fmt.Errorf("API 错误: %s", apiResp.Description)
 	}
 
-	// 保存到 rootPath/sticker集合名字 下面
-	saveDir := filepath.Join(savePath, stickerSetName)
-	if err := os.MkdirAll(saveDir, 0755); err != nil {
+	if err := os.MkdirAll(savePath, 0755); err != nil {
 		return fmt.Errorf("创建目录失败: %v", err)
 	}
 
@@ -135,47 +132,67 @@ func (td *TelegramDownloader) DownloadTgStickerSet(stickerSetName string, savePa
 
 	// 更新进度
 	progressCallback(DownloadProgress{
-		Current:      0,
-		Total:        total,
-		Status:       fmt.Sprintf("开始下载 %s (%d 个贴纸)", apiResp.Result.Title, total),
-		Percentage:   0.0,
-		SuccessCount: 0,
-		FailedCount:  0,
+		Current: 0,
+		Total:   total,
+		Status:  fmt.Sprintf("开始下载 %s (%d 个贴纸)", apiResp.Result.Title, total),
 	})
 
-	successCount := 0
-	failedCount := 0
+	var successCount int64
+	var failedCount int64
+	var completedCount int64
 
-	for i, sticker := range stickers {
-		// 开始下载
-		progressCallback(DownloadProgress{
-			Current:      i + 1,
-			Total:        total,
-			Status:       fmt.Sprintf("下载贴纸 %d/%d", i+1, total),
-			Percentage:   float64(i+1) / float64(total) * 100,
-			SuccessCount: successCount,
-			FailedCount:  failedCount,
-		})
-
-		if err := td.downloadSticker(sticker, saveDir, i+1, total); err != nil {
-			log.Printf("下载贴纸失败 %s: %v", sticker.FileID, err)
-			failedCount++
-		} else {
-			successCount++
-		}
-
-		// 下载完成
-		progressCallback(DownloadProgress{
-			Current:      i + 1,
-			Total:        total,
-			Status:       fmt.Sprintf("下载完成 %d/%d (成功: %d, 失败: %d)", i+1, total, successCount, failedCount),
-			Percentage:   float64(i+1) / float64(total) * 100,
-			SuccessCount: successCount,
-			FailedCount:  failedCount,
-		})
+	maxConcurrency := 6 // 默认并发数
+	if len(stickers) > 0 && stickers[0].IsAnimated {
+		maxConcurrency = 3 // TGS
 	}
 
-	log.Printf("下载完成: 成功 %d 个，失败 %d 个", successCount, failedCount)
+	semaphore := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+	var progressMutex sync.Mutex
+
+	// 初始化进度显示
+	progressCallback(DownloadProgress{
+		Current: 0,
+		Total:   total,
+		Status:  fmt.Sprintf("开始下载 %d 个贴纸", total),
+	})
+
+	for i, sticker := range stickers {
+		wg.Add(1)
+		go func(sticker TelegramSticker, index int) {
+			defer wg.Done()
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			if err := td.downloadSticker(sticker, savePath, index+1, total); err != nil {
+				log.Printf("下载贴纸失败 %s: %v", sticker.FileID, err)
+				atomic.AddInt64(&failedCount, 1)
+			} else {
+				atomic.AddInt64(&successCount, 1)
+			}
+
+			currentCompleted := atomic.AddInt64(&completedCount, 1)
+
+			progressMutex.Lock()
+			currentSuccess := atomic.LoadInt64(&successCount)
+			currentFailed := atomic.LoadInt64(&failedCount)
+
+			// 5下一更新 或 最后一个文件时更新
+			if currentCompleted%5 == 0 || currentCompleted == int64(total) {
+				progressCallback(DownloadProgress{
+					Current: int(currentCompleted),
+					Total:   total,
+					Status:  fmt.Sprintf("下载完成 %d/%d (成功: %d, 失败: %d)", currentCompleted, total, currentSuccess, currentFailed),
+				})
+			}
+			progressMutex.Unlock()
+		}(sticker, i)
+	}
+
+	wg.Wait()
+
+	log.Printf("下载完成: 成功 %d 个，失败 %d 个", atomic.LoadInt64(&successCount), atomic.LoadInt64(&failedCount))
 
 	stickerData := map[string]interface{}{
 		"title": apiResp.Result.Title,
@@ -184,18 +201,14 @@ func (td *TelegramDownloader) DownloadTgStickerSet(stickerSetName string, savePa
 		"url":   fmt.Sprintf("https://t.me/addstickers/%s", stickerSetName),
 	}
 
-	stickerDataPath := filepath.Join(saveDir, "sticker.json")
+	stickerDataPath := filepath.Join(savePath, "sticker.json")
 	data, _ := json.MarshalIndent(stickerData, "", "  ")
 	os.WriteFile(stickerDataPath, data, 0644)
 
-	// 完成
 	progressCallback(DownloadProgress{
-		Current:      total,
-		Total:        total,
-		Status:       fmt.Sprintf("下载完成: %s (成功: %d, 失败: %d)", apiResp.Result.Title, successCount, failedCount),
-		Percentage:   100.0,
-		SuccessCount: successCount,
-		FailedCount:  failedCount,
+		Current: total,
+		Total:   total,
+		Status:  fmt.Sprintf("下载完成: %s (成功: %d, 失败: %d)", apiResp.Result.Title, atomic.LoadInt64(&successCount), atomic.LoadInt64(&failedCount)),
 	})
 
 	return nil

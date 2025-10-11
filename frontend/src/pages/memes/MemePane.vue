@@ -4,9 +4,10 @@ import MemeInfo = memeFile.MemeInfo
 import { joinShowImgPath, joinPath } from '@/utils/path'
 import { store } from '@/store'
 import { ref } from 'vue'
-import { WriteFileToClipboard } from '../../../wailsjs/go/memeFile/MemeFile'
+import { WriteFileToClipboard, DeleteMemeFile } from '../../../wailsjs/go/memeFile/MemeFile'
 import LazyLoadImg from '@/components/LazyLoadImg.vue'
-import RenameModal from './modal/RenameModal.vue'
+import RenameMemeModal from './modal/RenameMemeModal.vue'
+import DeleteMemeModal from './modal/DeleteMemeModal.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 
 interface MemePaneProps {
@@ -18,6 +19,9 @@ const selectedImage = ref('')
 
 const isRenameModalVisible = ref(false)
 const currentRenameFile = ref('')
+
+const isDeleteModalVisible = ref(false)
+const currentDeleteFile = ref('')
 
 const handleClick = async (image: string) => {
   const realPath = joinPath(store.rootPath + `\\` + memeInfo.code, image)
@@ -57,6 +61,14 @@ const handleContextMenu = (e: MouseEvent, image: string) => {
         if (!selectedImage.value) return
         showRenameModal(selectedImage.value)
       }
+    },
+    {
+      icon: '🗑️',
+      label: '删除',
+      action: () => {
+        if (!selectedImage.value) return
+        showDeleteModal(selectedImage.value)
+      }
     }
   ]
 
@@ -79,9 +91,43 @@ const showRenameModal = (fileName: string) => {
   isRenameModalVisible.value = true
 }
 
+const showDeleteModal = (fileName: string) => {
+  currentDeleteFile.value = fileName
+  isDeleteModalVisible.value = true
+}
+
+const deleteMemeFile = async (fileName: string) => {
+  try {
+    await DeleteMemeFile(store.rootPath, memeInfo.code, fileName)
+    store.showToast(`已删除表情包: ${fileName}`)
+
+    // 从列表中移除
+    const index = memeInfo.memes.findIndex(item => item === fileName)
+    if (index !== -1) {
+      memeInfo.memes.splice(index, 1)
+      store.setMemeOrderChanged(memeInfo.code, true)
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    store.showToast(`删除失败: ${error}`, 'error')
+  }
+}
+
 const hideRenameModal = () => {
   isRenameModalVisible.value = false
   currentRenameFile.value = ''
+}
+
+const hideDeleteModal = () => {
+  isDeleteModalVisible.value = false
+  currentDeleteFile.value = ''
+}
+
+const handleDeleteConfirm = async () => {
+  if (currentDeleteFile.value) {
+    await deleteMemeFile(currentDeleteFile.value)
+    hideDeleteModal()
+  }
 }
 
 const handleRenameSuccess = (oldName: string, newName: string) => {
@@ -137,18 +183,27 @@ const handleDragEnd = (event: any) => {
     </VueDraggable>
   </div>
 
-  <RenameModal
+  <RenameMemeModal
     v-model:visible="isRenameModalVisible"
     :current-file="currentRenameFile"
     :parent-path="memeInfo.parentPath"
     :on-success="handleRenameSuccess"
     @close="hideRenameModal"
   />
+
+  <DeleteMemeModal
+    v-model:visible="isDeleteModalVisible"
+    :file-name="currentDeleteFile"
+    @close="hideDeleteModal"
+    @confirm="handleDeleteConfirm"
+  />
 </template>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .meme-grid {
-  background: var(--theme-background);
+  background: @rgb-b1;
   width: 100%;
   height: 100%;
   padding: 1rem;
@@ -187,17 +242,15 @@ const handleDragEnd = (event: any) => {
   z-index: 2;
   cursor: pointer;
   border-radius: 0.75rem;
-  background: #ffffff;
+  background: @rgb-b1;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(232, 232, 232, 0.8);
+  border: 1px solid @rgb-b3;
 
   &:hover {
     transform: translateY(-4px) scale(1.1);
-    border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+    border-color: rgba(@p, 0.3);
   }
 }
-
-
 
 .meme-list-move,
 .meme-list-enter-active,
@@ -218,8 +271,7 @@ const handleDragEnd = (event: any) => {
 
 .meme-item-ghost {
   opacity: 0.5;
-  background: rgba(59, 130, 246, 0.1);
-  border: 2px dashed var(--theme-primary);
+  background: rgba(@p, 0.1);
+  border: 2px dashed @rgb-p;
 }
-
 </style>

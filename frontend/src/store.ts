@@ -1,15 +1,14 @@
 import { reactive, watch } from 'vue'
 import { GenerateAllMemePath } from '../wailsjs/go/memeFile/MemeFile'
 import { ToastItem, ToastType } from './components/Toast.vue'
+import { presetThemes, type ThemeColorOptions } from './styles/themes'
 import {
   ALL_MEMES_PATH_KEY,
   BOT_TOKEN_KEY,
   PROXY_ENABLED_KEY,
   PROXY_URL_KEY,
   ROOT_PATH_KEY,
-  STAR_MEMES_KEY,
-  THEME_BACKGROUND_COLOR_KEY,
-  THEME_COLOR_KEY
+  STAR_MEMES_KEY
 } from './utils/common'
 
 interface ContextMenuItem {
@@ -97,30 +96,25 @@ export const store = reactive({
       this.showToast('已取消收藏！')
     }
   },
-  // 主题色
-  themeColor: '110,71,148,1', // 默认紫色，因为紫色更有韵味，格式为 r,g,b,a
-  themeBackgroundColor: '255,255,255,1',
+  // 主题系统
+  currentTheme: 'dark', // 当前主题
+  availableThemes: Object.keys(presetThemes),
   // 应用配置
   botToken: '',
   proxyEnabled: false,
   proxyURL: 'http://127.0.0.1:7890',
-  setThemeColor(color: string) {
-    this.themeColor = color
-    if (color.includes(',')) {
-      const [r, g, b, a = '1'] = color.split(',')
-      document.documentElement.style.setProperty('--theme-primary', `rgba(${r},${g},${b},${a})`)
-    } else {
-      document.documentElement.style.setProperty('--theme-primary', color)
+  setTheme(theme: string) {
+    if (!this.availableThemes.includes(theme)) {
+      console.warn(`Theme "${theme}" is not available`)
+      return
     }
+    
+    this.currentTheme = theme
+    document.documentElement.dataset.theme = theme
   },
-  setThemeBackgroundColor(color: string) {
-    this.themeBackgroundColor = color
-    if (color.includes(',')) {
-      const [r, g, b, a = '1'] = color.split(',')
-      document.documentElement.style.setProperty('--theme-background', `rgba(${r},${g},${b},${a})`)
-    } else {
-      document.documentElement.style.setProperty('--theme-background', color)
-    }
+  getThemeConfig(theme?: string): ThemeColorOptions {
+    const targetTheme = theme || this.currentTheme
+    return presetThemes[targetTheme] || presetThemes.dark
   },
   // 配置设置方法
   setBotToken(token: string) {
@@ -193,15 +187,9 @@ watch(() => store.allMemesPath, (newValue) => {
   }
 }, { deep: true })
 
-watch(() => store.themeColor, (newValue) => {
+watch(() => store.currentTheme, (newValue) => {
   if (window) {
-    window.localStorage.setItem(THEME_COLOR_KEY, newValue)
-  }
-})
-
-watch(() => store.themeBackgroundColor, (newValue) => {
-  if (window) {
-    window.localStorage.setItem(THEME_BACKGROUND_COLOR_KEY, newValue)
+    window.localStorage.setItem('meme-theme', newValue)
   }
 })
 
@@ -242,18 +230,11 @@ export function initializeStoreFromCache() {
       store.tabCurrent = STAR_MEMES_KEY
     }
     
-    const cachedThemeColor = window.localStorage.getItem(THEME_COLOR_KEY)
-    if (cachedThemeColor) {
-      store.setThemeColor(cachedThemeColor)
+    const cachedTheme = window.localStorage.getItem('meme-theme')
+    if (cachedTheme && store.availableThemes.includes(cachedTheme)) {
+      store.setTheme(cachedTheme)
     } else {
-      store.setThemeColor(store.themeColor)
-    }
-    
-    const cachedThemeBackgroundColor = window.localStorage.getItem(THEME_BACKGROUND_COLOR_KEY)
-    if (cachedThemeBackgroundColor) {
-      store.setThemeBackgroundColor(cachedThemeBackgroundColor)
-    } else {
-      store.setThemeBackgroundColor(store.themeBackgroundColor)
+      store.setTheme(store.currentTheme)
     }
     
     const cachedStarMemes = window.localStorage.getItem(STAR_MEMES_KEY)
