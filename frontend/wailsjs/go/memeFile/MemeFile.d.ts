@@ -3,6 +3,8 @@
 import {memeFile} from '../models';
 import {context} from '../models';
 
+export function ClipboardHasFiles():Promise<boolean>;
+
 export function DeleteMemeFile(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function DeleteTgStickerSet(arg1:string,arg2:string):Promise<void>;
@@ -12,6 +14,8 @@ export function DownloadTgStickerSet(arg1:string,arg2:string,arg3:string,arg4:st
 export function GenerateAllMemePath(arg1:string):Promise<Array<memeFile.MemeInfo>>;
 
 export function GetDirs(arg1:string):Promise<Array<string>>;
+
+export function GetFilesFromClipboard():Promise<Array<string>>;
 
 export function GetImages(arg1:string):Promise<Array<string>>;
 

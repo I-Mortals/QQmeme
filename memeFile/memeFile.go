@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"mymeme/memeFile/platform"
 	"mymeme/memeFile/sticker"
 	"mymeme/memeFile/utils"
-	"mymeme/windows"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -21,6 +21,7 @@ type MemeFile struct {
 	fileUtils  *utils.FileUtils
 	imageUtils *utils.ImageUtils
 	downloader *sticker.TelegramDownloader
+	clipboard  platform.Clipboard // 跨平台剪贴板实例
 }
 
 // NewMemeFile 创建新的MemeFile实例
@@ -28,6 +29,7 @@ func NewMemeFile() *MemeFile {
 	return &MemeFile{
 		fileUtils:  utils.NewFileUtils(),
 		imageUtils: utils.NewImageUtils(),
+		clipboard:  platform.NewClipboard(),
 	}
 }
 
@@ -147,15 +149,15 @@ func (m *MemeFile) GenerateAllMemePath(rootPath string) []MemeInfo {
 
 func (m *MemeFile) WriteFileToClipboard(filePath string) error {
 	log.Printf("复制文件到剪贴板: %s", filePath)
-	return windows.WriteFileToClipboard(filePath)
+	return m.clipboard.WriteFileToClipboard(filePath)
 }
 
-func ClipboardHasFiles() bool {
-	return windows.ClipboardHasFiles()
+func (m *MemeFile) ClipboardHasFiles() bool {
+	return m.clipboard.ClipboardHasFiles()
 }
 
-func GetFilesFromClipboard() ([]string, error) {
-	return windows.GetFilesFromClipboard()
+func (m *MemeFile) GetFilesFromClipboard() ([]string, error) {
+	return m.clipboard.GetFilesFromClipboard()
 }
 
 func (m *MemeFile) RenameFilesInOrder(tabName string, folderPath string, fileNames []string) error {

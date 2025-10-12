@@ -4,7 +4,8 @@ export const joinPath = (path: string, dir: string) => {
     return dir
   }
   
-  return path + '\\' + dir
+  // 使用正斜杠作为路径分隔符，这在所有平台上都有效
+  return path + '/' + dir
 }
 
 export const joinShowImgPath = (path: string, dir: string) => {
@@ -13,15 +14,14 @@ export const joinShowImgPath = (path: string, dir: string) => {
     return dir
   }
   
-  // 将 c:\ 格式修改为 \c\ 格式
   if (path.match(/^[a-zA-Z]:\\/)) {
-    // 提取盘符并重新格式化路径
+    // Windows格式: 将 c:\ 格式修改为 \c\ 格式
     const drive = path.charAt(0)
     const restPath = path.substring(2) // 跳过盘符和冒号
     
     return '\\' + drive + restPath + '\\' + dir
   }
   
-  // 如果路径格式不匹配，返回原始拼接
-  return path + '\\' + dir
+  // Unix/Mac格式: 直接使用正斜杠拼接
+  return path + '/' + dir
 }

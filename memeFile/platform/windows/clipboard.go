@@ -1,3 +1,5 @@
+//go:build windows
+
 package windows
 
 import (
@@ -51,9 +53,9 @@ const (
 	CF_HDROP       = 15 // 文件拖放格式
 
 	// 内存分配标志
-	GMEM_MOVEABLE  = 0x0002 // 可移动内存
-	GMEM_ZEROINIT  = 0x0040 // 初始化为零
-	GHND           = GMEM_MOVEABLE | GMEM_ZEROINIT // 组合标志
+	GMEM_MOVEABLE = 0x0002                        // 可移动内存
+	GMEM_ZEROINIT = 0x0040                        // 初始化为零
+	GHND          = GMEM_MOVEABLE | GMEM_ZEROINIT // 组合标志
 )
 
 // Windows API 封装函数

@@ -24,7 +24,7 @@ const isDeleteModalVisible = ref(false)
 const currentDeleteFile = ref('')
 
 const handleClick = async (image: string) => {
-  const realPath = joinPath(store.rootPath + `\\` + memeInfo.code, image)
+  const realPath = joinPath(store.rootPath + '/' + memeInfo.code, image)
   if (realPath) {
     try {
       await WriteFileToClipboard(realPath)
@@ -173,7 +173,7 @@ const handleDragEnd = (event: any) => {
           class="meme-item">
           <LazyLoadImg
             draggable="true"
-            :src="joinShowImgPath(store.rootPath + `\\` + memeInfo.code, image)"
+            :src="joinShowImgPath(store.rootPath + '/' + memeInfo.code, image)"
             :alt="image"
             class="meme-image"
             @click="handleClick(image)"

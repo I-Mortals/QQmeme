@@ -8,7 +8,7 @@ import { joinPath, joinShowImgPath } from '@/utils/path'
 
 const handleClick = async (starMeme: StarMemeItem) => {
   try {
-    await WriteFileToClipboard(joinPath(store.rootPath + `\\` + starMeme.fromFolder, starMeme.fileName))
+    await WriteFileToClipboard(joinPath(store.rootPath + '/' + starMeme.fromFolder, starMeme.fileName))
     store.showToast('复制成功！')
   } catch (error) {
     store.showToast(`复制失败：${error}`, 'error')
@@ -109,7 +109,7 @@ const handleDragEnd = (event: any) => {
           class="star-item"
           @contextmenu="handleContextMenu($event, star)">
           <LazyLoadImg
-            :src="joinShowImgPath(store.rootPath + `\\` + star.fromFolder, star.fileName)"
+            :src="joinShowImgPath(store.rootPath + '/' + star.fromFolder, star.fileName)"
             :alt="star.fileName"
             class="star-image"
             @click="handleClick(star)" />
