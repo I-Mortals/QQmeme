@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 )
 
 type FileLoader struct {
@@ -22,11 +23,12 @@ func (h *FileLoader) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// 处理不同操作系统的路径格式
 	var fileDir string
-	if len(filePath) > 3 && filePath[0:3] == "/\\" {
+
+	if runtime.GOOS == "windows" {
 		// Windows格式: /\c\path\to\file -> c:\path\to\file
 		rootPath := filePath[0:3]
 		fileDir = rootPath[1:2] + ":" + filePath[3:]
-	} else {
+	} else if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		// Unix/Mac格式: /path/to/file -> /path/to/file
 		fileDir = filePath
 	}

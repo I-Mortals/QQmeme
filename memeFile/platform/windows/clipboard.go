@@ -58,6 +58,13 @@ const (
 	GHND          = GMEM_MOVEABLE | GMEM_ZEROINIT // 组合标志
 )
 
+type WindowsClipboard struct {
+	
+}
+func NewClipboard() *WindowsClipboard {
+	return &WindowsClipboard{}
+}
+
 // Windows API 封装函数
 
 // OpenClipboard 打开剪贴板
@@ -98,7 +105,7 @@ func GlobalUnlock(hMem uintptr) bool {
 	return ret != 0
 }
 
-func WriteFileToClipboard(filePath string) error {
+func (w WindowsClipboard) WriteFileToClipboard(filePath string) error {
 	if filePath == "" {
 		return fmt.Errorf("文件路径为空")
 	}
@@ -167,7 +174,7 @@ func WriteFileToClipboard(filePath string) error {
 }
 
 // ClipboardHasFiles 检查剪贴板中是否有文件
-func ClipboardHasFiles() bool {
+func (w WindowsClipboard) ClipboardHasFiles() bool {
 	if !OpenClipboard(0) {
 		return false
 	}
@@ -178,7 +185,7 @@ func ClipboardHasFiles() bool {
 }
 
 // GetFilesFromClipboard 从剪贴板获取文件列表
-func GetFilesFromClipboard() ([]string, error) {
+func (w WindowsClipboard) GetFilesFromClipboard() ([]string, error) {
 	if !OpenClipboard(0) {
 		return nil, fmt.Errorf("打开剪贴板失败")
 	}
