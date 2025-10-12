@@ -15,17 +15,19 @@
       "ESNext",
       "DOM"
     ],
-    "types": ["node"],
+    "types": ["vite/client"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@wailsjs/*": ["wailsjs/*"],
     },
     "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.vue"
+    "src/**/*.vue",
+    "src/**/*.d.ts",
   ],
   "references": [
     {
