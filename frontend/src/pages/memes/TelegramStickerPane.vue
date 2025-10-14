@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { store } from '@/store'
+import { memeStore, applicationStore, toastStore } from '@/store'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import Select from '@/components/Select.vue'
-import { DownloadTgStickerSet } from '../../../wailsjs/go/memeFile/MemeFile'
-import { EventsOn } from '../../../wailsjs/runtime'
+import { DownloadTgStickerSet } from '@wailsjs/go/memeFile/MemeFile'
+import { EventsOn } from '@wailsjs/runtime'
 
 // 类型定义
 interface StickerSetInfo {
@@ -29,7 +29,7 @@ interface ProgressUpdateData {
 }
 
 // API 相关
-const API_BASE = computed(() => `https://api.telegram.org/bot${store.botToken}`)
+const API_BASE = computed(() => `https://api.telegram.org/bot${applicationStore.botToken}`)
 
 // 搜索相关状态
 const searchQuery = ref<string>('')
@@ -69,12 +69,12 @@ const getStickerSetName = (input: string): string => {
 
 const getStickerSet = async () => {
   if (!searchQuery.value.trim()) {
-    store.showToast('请输入获取关键词或链接', 'error')
+    toastStore.showToast('请输入获取关键词或链接', 'error')
     return
   }
 
-  if (!store.botToken) {
-    store.showToast('请先在设置中配置 Telegram Bot Token', 'error')
+  if (!applicationStore.botToken) {
+    toastStore.showToast('请先在设置中配置 Telegram Bot Token', 'error')
     return
   }
 
@@ -83,7 +83,7 @@ const getStickerSet = async () => {
     const stickerSetName = getStickerSetName(searchQuery.value)
 
     if (!stickerSetName) {
-      store.showToast('无法解析 sticker 集合名称', 'error')
+      toastStore.showToast('无法解析 sticker 集合名称', 'error')
       return
     }
 
@@ -98,7 +98,7 @@ const getStickerSet = async () => {
     })
 
     if (!response.ok) {
-      store.showToast(`获取失败: ${response.status} ${response.statusText}`, 'error')
+      toastStore.showToast(`获取失败: ${response.status} ${response.statusText}`, 'error')
       return
     }
 
@@ -121,13 +121,13 @@ const getStickerSet = async () => {
         searchResults.value.unshift(stickerSetInfo)
       }
 
-      store.showToast(`获取到表情包集合: ${stickerSetInfo.title} (${stickerSetInfo.stickerCount} 个)`)
+      toastStore.showToast(`获取到表情包集合: ${stickerSetInfo.title} (${stickerSetInfo.stickerCount} 个)`)
     } else {
-      store.showToast(`未获取到名为 "${stickerSetName}" 的表情包集合`, 'error')
+      toastStore.showToast(`未获取到名为 "${stickerSetName}" 的表情包集合`, 'error')
     }
   } catch (error) {
     console.error('获取失败:', error)
-    store.showToast('获取失败，请稍后重试', 'error')
+    toastStore.showToast('获取失败，请稍后重试', 'error')
   } finally {
     isSearching.value = false
   }
@@ -147,20 +147,20 @@ const downloadStickerSet = async (stickerSet: StickerSetInfo) => {
       status: '准备下载...'
     }
 
-    let finalSavePath = store.rootPath
+    let finalSavePath = memeStore.rootPath
     const selectedFolderCode = selectedFolders.value[stickerSet.name]
     if (selectedFolderCode) {
-      const selectedFolderInfo = store.allMemesPath.find(folder => folder.code === selectedFolderCode)
+      const selectedFolderInfo = memeStore.allMemesPath.find(folder => folder.code === selectedFolderCode)
       if (selectedFolderInfo) {
         // 直接使用选中文件夹的完整路径
         finalSavePath = selectedFolderInfo.parentPath
       }
     } else {
       // 没有选择文件夹时，直接用 sticker集合的名称
-      finalSavePath = `${store.rootPath}/${stickerSet.name}`
+      finalSavePath = `${memeStore.rootPath}/${stickerSet.name}`
     }
 
-    await DownloadTgStickerSet(stickerSet.name, finalSavePath, store.botToken, store.proxyURL, store.proxyEnabled)
+    await DownloadTgStickerSet(stickerSet.name, finalSavePath, applicationStore.botToken, applicationStore.proxyURL, applicationStore.proxyEnabled)
 
     // 更新进度为完成状态
     downloadProgress.value[stickerSet.name] = {
@@ -170,10 +170,10 @@ const downloadStickerSet = async (stickerSet: StickerSetInfo) => {
     }
 
     downloadedSets.value.add(stickerSet.name)
-    store.showToast(`下载完成: ${stickerSet.title}`, 'success')
+    toastStore.showToast(`下载完成: ${stickerSet.title}`, 'success')
 
-    await store.refreshMemes()
-    store.forceRefreshCurrentTab()
+    await memeStore.refreshMemes()
+    memeStore.forceRefreshCurrentTab()
 
     setTimeout(() => {
       downloadingSets.value.delete(stickerSet.name)
@@ -182,7 +182,7 @@ const downloadStickerSet = async (stickerSet: StickerSetInfo) => {
   } catch (error) {
     console.error('下载失败:', error)
     const errorMessage = error instanceof Error ? error.message : '未知错误'
-    store.showToast(`下载失败: ${errorMessage}`, 'error')
+    toastStore.showToast(`下载失败: ${errorMessage}`, 'error')
 
     // 下载失败时立即清理
     downloadingSets.value.delete(stickerSet.name)
@@ -198,7 +198,7 @@ const folderOptions = computed(() => {
     { value: '', label: '默认（使用sticker集合名称）' }
   ]
 
-  store.allMemesPath.forEach(folder => {
+  memeStore.allMemesPath.forEach(folder => {
     options.push({
       value: folder.code,
       label: folder.name

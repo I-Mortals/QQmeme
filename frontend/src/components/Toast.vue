@@ -2,7 +2,7 @@
   <div class="toast-container">
     <TransitionGroup name="toast">
       <div
-        v-for="toast in store.toasts"
+        v-for="toast in toastStore.toasts"
         :key="toast.id"
         class="toast"
         :class="`toast-${toast.type}`"
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { store } from '@/store'
+import { toastStore } from '@/store'
 import { Icon } from '@iconify/vue'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'

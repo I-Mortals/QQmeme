@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Modal from '@/components/Modal.vue'
-import { RenameFoldersInOrder } from '../../../../wailsjs/go/memeFile/MemeFile'
-import { store } from '@/store'
+import { RenameFoldersInOrder } from '@wailsjs/go/memeFile/MemeFile'
+import { memeStore, toastStore } from '@/store'
 
 interface SaveTabOrderModalProps {
   visible: boolean
@@ -28,8 +28,8 @@ const hideModal = () => {
 }
 
 const confirmSaveTabOrder = async () => {
-  if (!store.tabOrderChanged) {
-    store.showToast('tab 顺序未改变，无需保存', 'info')
+  if (!memeStore.tabOrderChanged) {
+    toastStore.showToast('tab 顺序未改变，无需保存', 'info')
     hideModal()
     return
   }
@@ -39,7 +39,7 @@ const confirmSaveTabOrder = async () => {
   try {
     // 保存重命名前的文件夹名称映射
     const oldToNewFolderMap = new Map<string, string>()
-    const folderNames = store.allMemesPath.map((meme, index) => {
+    const folderNames = memeStore.allMemesPath.map((meme, index) => {
       let cleanFolderName = meme.name
       if (meme.name.includes('_')) {
         const parts = meme.name.split('_')
@@ -52,22 +52,22 @@ const confirmSaveTabOrder = async () => {
       return meme.name
     })
 
-    await RenameFoldersInOrder(store.rootPath, folderNames)
+    await RenameFoldersInOrder(memeStore.rootPath, folderNames)
 
-    store.starMemes.forEach(starMeme => {
+    memeStore.starMemes.forEach(starMeme => {
       const newFolderName = oldToNewFolderMap.get(starMeme.fromFolder)
       if (newFolderName) {
         starMeme.fromFolder = newFolderName
       }
     })
 
-    await store.refreshMemes()
+    await memeStore.refreshMemes()
 
-    if (store.allMemesPath.length > 0) {
-      store.tabCurrent = store.allMemesPath[0].code
+    if (memeStore.allMemesPath.length > 0) {
+      memeStore.tabCurrent = memeStore.allMemesPath[0].code
     }
 
-    store.showToast('tab 文件夹顺序已保存！', 'success')
+    toastStore.showToast('tab 文件夹顺序已保存！', 'success')
 
     if (props.onSuccess) {
       props.onSuccess()
@@ -76,7 +76,7 @@ const confirmSaveTabOrder = async () => {
     hideModal()
   } catch (error) {
     console.error('保存 tab 文件夹顺序失败:', error)
-    store.showToast(`保存失败：${error}`, 'error')
+    toastStore.showToast(`保存失败：${error}`, 'error')
   } finally {
     isSaving.value = false
   }

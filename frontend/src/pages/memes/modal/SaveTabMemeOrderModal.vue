@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Modal from '@/components/Modal.vue'
-import { RenameFilesInOrder } from '../../../../wailsjs/go/memeFile/MemeFile'
-import { store } from '@/store'
+import { RenameFilesInOrder } from '@wailsjs/go/memeFile/MemeFile'
+import { memeStore, toastStore } from '@/store'
 
 interface SaveTabMemeOrderModalProps {
   visible: boolean
@@ -34,9 +34,9 @@ const hideModal = () => {
 }
 
 const confirmSaveOrder = async () => {
-  const currentMeme = store.allMemesPath.find(meme => meme.code === props.tabName)
+  const currentMeme = memeStore.allMemesPath.find(meme => meme.code === props.tabName)
   if (!currentMeme?.orderChanged) {
-    store.showToast('当前表情包顺序未改变，无需保存', 'info')
+    toastStore.showToast('当前表情包顺序未改变，无需保存', 'info')
     hideModal()
     return
   }
@@ -50,7 +50,7 @@ const confirmSaveOrder = async () => {
       props.memes
     )
 
-    store.showToast('表情包顺序已保存！')
+    toastStore.showToast('表情包顺序已保存！')
 
     if (props.onSuccess) {
       props.onSuccess()
@@ -58,7 +58,7 @@ const confirmSaveOrder = async () => {
 
     hideModal()
   } catch (error) {
-    store.showToast(`保存失败：${error}`, 'error')
+    toastStore.showToast(`保存失败：${error}`, 'error')
   } finally {
     isRenaming.value = false
   }

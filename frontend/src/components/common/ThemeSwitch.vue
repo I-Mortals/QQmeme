@@ -36,15 +36,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { store } from '@/store'
+import { themeStore } from '@/store'
 import { Popup } from '@/components/popup'
 import Button from '@/components/Button.vue'
 
 const showDropdown = ref(false)
 const triggerRef = ref<HTMLElement>()
 
-const currentTheme = computed(() => store.currentTheme)
-const availableThemes = computed(() => store.availableThemes)
+const currentTheme = computed(() => themeStore.currentTheme)
+const availableThemes = computed(() => themeStore.availableThemes)
 
 const toggleDropdown = () => {
   showDropdown.value = !showDropdown.value
@@ -55,12 +55,12 @@ const closeDropdown = () => {
 }
 
 const selectTheme = (theme: string) => {
-  store.setTheme(theme)
+  themeStore.setTheme(theme)
   closeDropdown()
 }
 
 const getThemeConfig = (theme: string) => {
-  return store.getThemeConfig(theme)
+  return themeStore.getThemeConfig(theme)
 }
 </script>
 

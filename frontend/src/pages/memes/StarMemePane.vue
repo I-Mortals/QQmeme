@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick } from 'vue'
-import { StarMemeItem, store } from '@/store'
-import { WriteFileToClipboard } from '../../../wailsjs/go/memeFile/MemeFile'
+import { memeStore, toastStore, contextStore } from '@/store'
+import type { StarMemeItem } from '@/store/memeStore'
+import { WriteFileToClipboard } from '@wailsjs/go/memeFile/MemeFile'
 import LazyLoadImg from '@/components/LazyLoadImg.vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { joinPath, joinShowImgPath } from '@/utils/path'
 
 const handleClick = async (starMeme: StarMemeItem) => {
   try {
-    await WriteFileToClipboard(joinPath(store.rootPath + '/' + starMeme.fromFolder, starMeme.fileName))
-    store.showToast('复制成功！')
+    await WriteFileToClipboard(joinPath(memeStore.rootPath + '/' + starMeme.fromFolder, starMeme.fileName))
+    toastStore.showToast('复制成功！')
   } catch (error) {
-    store.showToast(`复制失败：${error}`, 'error')
+    toastStore.showToast(`复制失败：${error}`, 'error')
   }
 }
 
@@ -27,7 +28,10 @@ const handleContextMenu = (e: MouseEvent, starMeme: StarMemeItem) => {
     {
       icon: '🗑️',
       label: '从收藏夹移除',
-      action: () => store.removeFromStarMemes(starMeme.id)
+      action: () => {
+        memeStore.removeFromStarMemes(starMeme.id)
+        toastStore.showToast('已取消收藏！')
+      }
     },
     {
       icon: '📌',
@@ -37,17 +41,26 @@ const handleContextMenu = (e: MouseEvent, starMeme: StarMemeItem) => {
     {
       icon: '🔗',
       label: `跳转到 ${parseFolder.value(starMeme.fromFolder)}`,
-      action: () => goToParentTab(starMeme.fromFolder)
+      action: () => goToParentTab(starMeme.fromFolder),
+      separator: true
+    },
+    {
+      icon: '🔄',
+      label: '刷新缓存',
+      action: () => {
+        memeStore.refreshMemes()
+        toastStore.showToast('缓存刷新成功！', 'success')
+      }
     }
   ]
 
-  store.showContextMenu(e, menuItems)
+  contextStore.showContextMenu(e, menuItems)
 }
 
 const goToParentTab = (tabKey: string) => {
-  const targetTab = store.allMemesPath.find(tab => tab.code === tabKey)
+  const targetTab = memeStore.allMemesPath.find(tab => tab.code === tabKey)
   if (targetTab) {
-    store.handleTabClick(tabKey)
+    memeStore.handleTabClick(tabKey)
 
     nextTick(() => {
       const targetElement = document.querySelector(`[data-meme-tab="${tabKey}"]`) as HTMLElement
@@ -60,25 +73,25 @@ const goToParentTab = (tabKey: string) => {
       }
     })
 
-    store.showToast(`已跳转到 ${parseFolder.value(tabKey)} 标签页`)
+    toastStore.showToast(`已跳转到 ${parseFolder.value(tabKey)} 标签页`)
   } else {
-    store.showToast(`找不到 ${parseFolder.value(tabKey)} 标签页`, 'error')
+    toastStore.showToast(`找不到 ${parseFolder.value(tabKey)} 标签页`, 'error')
   }
 };
 
 const topStar = (id: string) => {
-  const index = store.starMemes.findIndex(item => item.id === id)
+  const index = memeStore.starMemes.findIndex(item => item.id === id)
   if (index !== -1 && index !== 0) {
-    const item = store.starMemes.splice(index, 1)[0]
-    store.starMemes.unshift(item)
-    store.showToast('已置顶到收藏夹首位')
+    const item = memeStore.starMemes.splice(index, 1)[0]
+    memeStore.starMemes.unshift(item)
+    toastStore.showToast('已置顶到收藏夹首位')
   }
 }
 
 const handleDragEnd = (event: any) => {
   const { newIndex, oldIndex } = event
   if (newIndex !== oldIndex) {
-    store.showToast('收藏夹表情包顺序已更新')
+    toastStore.showToast('收藏夹表情包顺序已更新')
   }
 }
 </script>
@@ -86,9 +99,9 @@ const handleDragEnd = (event: any) => {
 <template>
   <div
     class="star-grid"
-    :key="store.forceRefreshKey">
+    :key="memeStore.forceRefreshKey">
 
-    <div v-if="store.starMemes.length === 0" class="star-meme-empty">
+    <div v-if="memeStore.starMemes.length === 0" class="star-meme-empty">
       <div class="empty-icon">⭐</div>
       <h3>收藏夹是空的</h3>
       <p>右键点击任意表情包选择"收藏"来添加到这里</p>
@@ -96,7 +109,7 @@ const handleDragEnd = (event: any) => {
 
     <VueDraggable
       v-else
-      v-model="store.starMemes"
+      v-model="memeStore.starMemes"
       class="star-grid-inner"
       :ghostClass="'star-item-ghost'"
       @end="handleDragEnd">
@@ -104,12 +117,12 @@ const handleDragEnd = (event: any) => {
         type="transition"
         name="star-list">
         <div
-          v-for="star in store.starMemes"
+          v-for="star in memeStore.starMemes"
           :key="star.id"
           class="star-item"
           @contextmenu="handleContextMenu($event, star)">
           <LazyLoadImg
-            :src="joinShowImgPath(store.rootPath + '/' + star.fromFolder, star.fileName)"
+            :src="joinShowImgPath(memeStore.rootPath + '/' + star.fromFolder, star.fileName)"
             :alt="star.fileName"
             class="star-image"
             @click="handleClick(star)" />

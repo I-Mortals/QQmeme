@@ -1,26 +1,26 @@
 <script lang="ts" setup>
-import { GenerateAllMemePath, SelectRootDir } from '../../../../wailsjs/go/memeFile/MemeFile'
-import { store } from '@/store'
+import { GenerateAllMemePath, SelectRootDir } from '@wailsjs/go/memeFile/MemeFile'
+import { memeStore, toastStore } from '@/store'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 
 const selectRoot = async () => {
   const path = await SelectRootDir()
   if (path) {
-    store.rootPath = path
-    store.allMemesPath = await GenerateAllMemePath(store.rootPath)
+    memeStore.rootPath = path
+    memeStore.allMemesPath = await GenerateAllMemePath(memeStore.rootPath)
   }
 }
 
 const clearCache = () => {
-  store.clearCache()
-  store.rootPath = ''
-  store.showToast('缓存清除成功！', 'success')
+  memeStore.clearCache()
+  memeStore.rootPath = ''
+  toastStore.showToast('缓存清除成功！', 'success')
 }
 
 const refreshMemes = () => {
-  store.refreshMemes()
-  store.showToast('刷新列表成功！', 'success')
+  memeStore.refreshMemes()
+  toastStore.showToast('刷新列表成功！', 'success')
 }
 </script>
 
@@ -35,7 +35,7 @@ const refreshMemes = () => {
         </div>
         <div class="setting-control">
           <Input
-            :model-value="store.rootPath || '请选择主目录'"
+            :model-value="memeStore.rootPath || '请选择主目录'"
             readonly
             placeholder="请选择主目录"
             class="path-input"

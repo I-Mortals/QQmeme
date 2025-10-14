@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { memeFile } from '../../../wailsjs/go/models'
+import { memeFile } from '@wailsjs/go/models'
 import MemeInfo = memeFile.MemeInfo
 import { joinShowImgPath, joinPath } from '@/utils/path'
-import { store } from '@/store'
+import { memeStore, toastStore, contextStore } from '@/store'
 import { ref } from 'vue'
-import { WriteFileToClipboard, DeleteMemeFile } from '../../../wailsjs/go/memeFile/MemeFile'
+import { WriteFileToClipboard, DeleteMemeFile } from '@wailsjs/go/memeFile/MemeFile'
 import LazyLoadImg from '@/components/LazyLoadImg.vue'
 import RenameMemeModal from './modal/RenameMemeModal.vue'
 import DeleteMemeModal from './modal/DeleteMemeModal.vue'
@@ -24,13 +24,13 @@ const isDeleteModalVisible = ref(false)
 const currentDeleteFile = ref('')
 
 const handleClick = async (image: string) => {
-  const realPath = joinPath(store.rootPath + '/' + memeInfo.code, image)
+  const realPath = joinPath(memeStore.rootPath + '/' + memeInfo.code, image)
   if (realPath) {
     try {
       await WriteFileToClipboard(realPath)
-      store.showToast('复制成功！')
+      toastStore.showToast('复制成功！')
     } catch (error) {
-      store.showToast(`复制失败：${error}`, 'error')
+      toastStore.showToast(`复制失败：${error}`, 'error')
     }
   }
 }
@@ -50,7 +50,8 @@ const handleContextMenu = (e: MouseEvent, image: string) => {
       action: () => {
         if (!selectedImage.value) return
 
-        store.addToStarMemes(image, memeInfo.code)
+        memeStore.addToStarMemes(image, memeInfo.code)
+        toastStore.showToast('已收藏！')
       },
       separator: true
     },
@@ -68,11 +69,20 @@ const handleContextMenu = (e: MouseEvent, image: string) => {
       action: () => {
         if (!selectedImage.value) return
         showDeleteModal(selectedImage.value)
+      },
+      separator: true
+    },
+    {
+      icon: '🔄',
+      label: '刷新缓存',
+      action: () => {
+        memeStore.refreshMemes()
+        toastStore.showToast('缓存刷新成功！', 'success')
       }
     }
   ]
 
-  store.showContextMenu(e, menuItems)
+  contextStore.showContextMenu(e, menuItems)
 }
 
 const topImage = () => {
@@ -82,7 +92,7 @@ const topImage = () => {
   if (index !== -1 && index !== 0) {
     const item = memeInfo.memes.splice(index, 1)[0]
     memeInfo.memes.unshift(item)
-    store.setMemeOrderChanged(memeInfo.code, true)
+    memeStore.setMemeOrderChanged(memeInfo.code, true)
   }
 }
 
@@ -98,18 +108,18 @@ const showDeleteModal = (fileName: string) => {
 
 const deleteMemeFile = async (fileName: string) => {
   try {
-    await DeleteMemeFile(store.rootPath, memeInfo.code, fileName)
-    store.showToast(`已删除表情包: ${fileName}`)
+    await DeleteMemeFile(memeStore.rootPath, memeInfo.code, fileName)
+    toastStore.showToast(`已删除表情包: ${fileName}`)
 
     // 从列表中移除
     const index = memeInfo.memes.findIndex(item => item === fileName)
     if (index !== -1) {
       memeInfo.memes.splice(index, 1)
-      store.setMemeOrderChanged(memeInfo.code, true)
+      memeStore.setMemeOrderChanged(memeInfo.code, true)
     }
   } catch (error) {
     console.error('删除失败:', error)
-    store.showToast(`删除失败: ${error}`, 'error')
+    toastStore.showToast(`删除失败: ${error}`, 'error')
   }
 }
 
@@ -135,7 +145,7 @@ const handleRenameSuccess = (oldName: string, newName: string) => {
   if (index !== -1) {
     memeInfo.memes[index] = newName
 
-    const currentMemeInfo = store.allMemesPath.find((meme) => meme.code === memeInfo.code)
+    const currentMemeInfo = memeStore.allMemesPath.find((meme) => meme.code === memeInfo.code)
     if (currentMemeInfo) {
       currentMemeInfo.memes = [...memeInfo.memes]
     }
@@ -145,11 +155,11 @@ const handleRenameSuccess = (oldName: string, newName: string) => {
 const handleDragEnd = (event: any) => {
   const { newIndex, oldIndex } = event
   if (newIndex !== oldIndex) {
-    const currentMemeInfo = store.allMemesPath.find((meme) => meme.code === memeInfo.code)
+    const currentMemeInfo = memeStore.allMemesPath.find((meme) => meme.code === memeInfo.code)
     if (currentMemeInfo) {
       currentMemeInfo.memes = [...memeInfo.memes]
-      store.setMemeOrderChanged(memeInfo.code, true)
-      store.showToast('表情包顺序已更新')
+      memeStore.setMemeOrderChanged(memeInfo.code, true)
+      toastStore.showToast('表情包顺序已更新')
     }
   }
 }
@@ -158,7 +168,7 @@ const handleDragEnd = (event: any) => {
 <template>
   <div
     class="meme-grid"
-    :key="store.forceRefreshKey">
+    :key="memeStore.forceRefreshKey">
     <VueDraggable
       v-model="memeInfo.memes"
       class="meme-grid-inner"
@@ -173,7 +183,7 @@ const handleDragEnd = (event: any) => {
           class="meme-item">
           <LazyLoadImg
             draggable="true"
-            :src="joinShowImgPath(store.rootPath + '/' + memeInfo.code, image)"
+            :src="joinShowImgPath(memeStore.rootPath + '/' + memeInfo.code, image)"
             :alt="image"
             class="meme-image"
             @click="handleClick(image)"

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
-import { store } from '@/store'
+import { memeStore, toastStore, contextStore } from '@/store'
 import { Tab, TabPanel } from '@/components/tab'
 import MemePane from './MemePane.vue'
 import StarMemePane from './StarMemePane.vue'
@@ -11,7 +11,7 @@ import SaveTabMemeOrderModal from './modal/SaveTabMemeOrderModal.vue'
 import SaveTabOrderModal from './modal/SaveTabOrderModal.vue'
 
 const tabs = computed<TabItem[]>(() => {
-  return store.allMemesPath.map(memeInfo => ({
+  return memeStore.allMemesPath.map(memeInfo => ({
       key: memeInfo.code,
       label: memeInfo.name,
       icon: memeInfo.icon,
@@ -39,11 +39,11 @@ const isConfirmModalOpen = ref(false)
 const isSaveTabOrderModalOpen = ref(false)
 
 const handleTabChange = (newKey: string) => {
-  store.handleTabClick(newKey)
+  memeStore.handleTabClick(newKey)
 }
 
 const handleTabClick = (tab: TabItem) => {
-  store.handleTabClick(tab.key)
+  memeStore.handleTabClick(tab.key)
 }
 
 const handleContextMenu = (e: MouseEvent, memeCode: string) => {
@@ -68,30 +68,38 @@ const handleContextMenu = (e: MouseEvent, memeCode: string) => {
     {
       icon: '💾',
       label: '保存 tab 选项顺序',
-      action: () => isSaveTabOrderModalOpen.value = true,
-      separator: false
+      action: () => isSaveTabOrderModalOpen.value = true
+    },
+    {
+      icon: '🔄',
+      label: '刷新缓存',
+      action: () => {
+        memeStore.refreshMemes()
+        toastStore.showToast('缓存刷新成功！', 'success')
+      },
+      separator: true
     }
   ]
 
-  store.showContextMenu(e, menuItems)
+  contextStore.showContextMenu(e, menuItems)
 }
 
 const topTab = () => {
   if (!topTabActive.value) return
 
-  const index = store.allMemesPath.findIndex(item => item.code === topTabActive.value)
+  const index = memeStore.allMemesPath.findIndex(item => item.code === topTabActive.value)
   if (index !== -1) {
-    const item = store.allMemesPath.splice(index, 1)[0]
-    store.allMemesPath.unshift(item)
+    const item = memeStore.allMemesPath.splice(index, 1)[0]
+    memeStore.allMemesPath.unshift(item)
   }
 }
 
 const handleSaveMemeOrderSuccess = async () => {
-  store.setMemeOrderChanged(topTabActive.value, false)
+  memeStore.setMemeOrderChanged(topTabActive.value, false)
 
-  await store.refreshMemes()
+  await memeStore.refreshMemes()
 
-  store.forceRefreshCurrentTab()
+  memeStore.forceRefreshCurrentTab()
 
   isConfirmModalOpen.value = false
 }
@@ -99,13 +107,13 @@ const handleSaveMemeOrderSuccess = async () => {
 const handleDragEnd = (event: any) => {
   const { newIndex, oldIndex } = event
   if (newIndex !== oldIndex) {
-    store.setTabOrderChanged(true)
-    store.showToast('tab 顺序已更新')
+    memeStore.setTabOrderChanged(true)
+    toastStore.showToast('tab 顺序已更新')
   }
 }
 
 const handleSaveTabOrderSuccess = () => {
-  store.setTabOrderChanged(false)
+  memeStore.setTabOrderChanged(false)
   isSaveTabOrderModalOpen.value = false
 }
 </script>
@@ -113,7 +121,7 @@ const handleSaveTabOrderSuccess = () => {
 <template>
   <main class="meme-box">
     <Tab
-      v-model="store.tabCurrent"
+      v-model="memeStore.tabCurrent"
       header-position="bottom"
       :tabs="tabs"
       :lazy="true"
@@ -123,11 +131,11 @@ const handleSaveTabOrderSuccess = () => {
       <template #fixedLeft>
         <div class="tab-fixed-list">
           <div
-            @click="store.handleTabClick('starMemes')"
+            @click="memeStore.handleTabClick('starMemes')"
             :class="[
               'tab-item',
               'star-tab-item',
-              { 'tab-item-action': store.tabCurrent === 'starMemes' }
+              { 'tab-item-action': memeStore.tabCurrent === 'starMemes' }
             ]">
             <div class="star-icon">⭐</div>
           </div>
@@ -145,22 +153,22 @@ const handleSaveTabOrderSuccess = () => {
       </template>
 
       <template #scrollable>
-        <div class="tab-list" :key="store.forceRefreshKey">
+        <div class="tab-list" :key="memeStore.forceRefreshKey">
           <VueDraggable
-            v-model="store.allMemesPath"
+            v-model="memeStore.allMemesPath"
             class="tab-list-inner"
             :ghostClass="'tab-item-ghost'"
             @end="handleDragEnd">
             <TransitionGroup name="tab-list">
               <div
-                v-for="meme in store.allMemesPath"
+                v-for="meme in memeStore.allMemesPath"
                 :key="meme.code"
-                @click="store.handleTabClick(meme.code)"
+                @click="memeStore.handleTabClick(meme.code)"
                 @contextmenu="handleContextMenu($event, meme.code)"
                 :data-meme-tab="meme.code"
                 :class="[
                   'tab-item',
-                  { 'tab-item-action': meme.code === store.tabCurrent },
+                  { 'tab-item-action': meme.code === memeStore.tabCurrent },
                   { 'tab-item-changed': meme.orderChanged }
                 ]">
                 <img
@@ -177,7 +185,7 @@ const handleSaveTabOrderSuccess = () => {
         v-for="config in tabsConfig"
         :key="config.key"
         :tab-key="config.key"
-        :active="store.tabCurrent === config.key"
+        :active="memeStore.tabCurrent === config.key"
       >
         <component
           :is="config.component"
@@ -190,8 +198,8 @@ const handleSaveTabOrderSuccess = () => {
     <SaveTabMemeOrderModal
       v-model:visible="isConfirmModalOpen"
       :tab-name="topTabActive"
-      :parent-path="store.allMemesPath.find((meme: any) => meme.code === topTabActive)?.parentPath || ''"
-      :memes="store.allMemesPath.find((meme: any) => meme.code === topTabActive)?.memes || []"
+      :parent-path="memeStore.allMemesPath.find((meme: any) => meme.code === topTabActive)?.parentPath || ''"
+      :memes="memeStore.allMemesPath.find((meme: any) => meme.code === topTabActive)?.memes || []"
       :on-success="handleSaveMemeOrderSuccess"
       @close="() => isConfirmModalOpen = false"
     />
@@ -231,7 +239,7 @@ const handleSaveTabOrderSuccess = () => {
 
 :deep(.tab-header) {
   background: @rgb-p;
-  padding: 0 .25rem;
+  padding: .25rem;
 }
 
 .tab-list {

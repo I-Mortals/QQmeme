@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import Modal from '@/components/Modal.vue'
 import Input from '@/components/Input.vue'
-import { store } from '@/store'
-import { RenameFile } from '../../../../wailsjs/go/memeFile/MemeFile'
+import { toastStore } from '@/store'
+import { RenameFile } from '@wailsjs/go/memeFile/MemeFile'
 
 interface RenameModalProps {
   visible: boolean
@@ -36,13 +36,13 @@ const hideRenameModal = () => {
 
 const confirmRename = async () => {
   if (!newFileName.value) {
-    store.showToast('文件名不能为空', 'error')
+    toastStore.showToast('文件名不能为空', 'error')
     return
   }
 
   const originalNameWithoutExt = props.currentFile.replace(/\.[^/.]+$/, '')
   if (newFileName.value === originalNameWithoutExt) {
-    store.showToast('文件名未改变', 'error')
+    toastStore.showToast('文件名未改变', 'error')
     return
   }
 
@@ -55,14 +55,14 @@ const confirmRename = async () => {
     try {
       await RenameFile(props.parentPath, props.currentFile, newFileNameWithExt)
 
-      store.showToast('重命名成功！', 'success')
+      toastStore.showToast('重命名成功！', 'success')
 
       props.onSuccess?.(props.currentFile, newFileNameWithExt)
 
       isRenaming.value = false
       hideRenameModal()
     } catch (error) {
-      store.showToast(`重命名失败：${error}`, 'error')
+      toastStore.showToast(`重命名失败：${error}`, 'error')
       isRenaming.value = false
     }
   }

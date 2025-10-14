@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { store } from '@/store'
+import { contextStore } from '@/store'
 
 interface MenuItem {
   icon: string
@@ -32,7 +32,7 @@ const calculateMenuPosition = (x: number, y: number) => {
   return { left: `${x}px`, top: `${y}px` }
 }
 
-watch([() => store.contextMenu.visible, () => store.contextMenu.position], ([visible, position]) => {
+watch([() => contextStore.contextMenu.visible, () => contextStore.contextMenu.position], ([visible, position]) => {
   if (visible && position && contextMenu.value) {
     nextTick(()=>{
       if (!contextMenu.value) return
@@ -44,7 +44,7 @@ watch([() => store.contextMenu.visible, () => store.contextMenu.position], ([vis
 }, { deep: true })
 
 const hideMenu = () => {
-  store.hideContextMenu()
+  contextStore.hideContextMenu()
 }
 
 const handleMenuItemClick = (action: () => void) => {
@@ -62,10 +62,10 @@ const handleMenuItemClick = (action: () => void) => {
       <div
         ref="contextMenu"
         class="context-menu"
-        v-show="store.contextMenu.visible"
+        v-show="contextStore.contextMenu.visible"
         v-click-outside="hideMenu">
         <template
-          v-for="(item, index) in store.contextMenu.menuItems"
+          v-for="(item, index) in contextStore.contextMenu.menuItems"
           :key="index">
           <!-- 分隔符 -->
           <div v-if="item.separator" class="menu-separator"></div>

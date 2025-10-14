@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { store } from '@/store'
+import { toastStore } from '@/store'
 import { ref } from 'vue'
 
 const lists = ref([
@@ -28,9 +28,9 @@ const lists = ref([
 const copy = async (url: string) => {
   try {
     await navigator.clipboard.writeText(url)
-    store.showToast('复制网址成功！')
+    toastStore.showToast('复制网址成功！')
   } catch (error) {
-    store.showToast('复制网址失败！')
+    toastStore.showToast('复制网址失败！')
   }
 
 }

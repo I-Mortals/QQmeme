@@ -2,27 +2,27 @@
 import { ref } from 'vue'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
-import { store } from '@/store'
+import { applicationStore, toastStore } from '@/store'
 
-const botTokenInput = ref(store.botToken)
-const proxyEnabled = ref(store.proxyEnabled)
-const proxyURLInput = ref(store.proxyURL)
+const botTokenInput = ref(applicationStore.botToken)
+const proxyEnabled = ref(applicationStore.proxyEnabled)
+const proxyURLInput = ref(applicationStore.proxyURL)
 
 const saveBotToken = () => {
   const token = botTokenInput.value.trim()
 
   if (!token) {
-    store.showToast('Bot Token 不能为空', 'error')
+    toastStore.showToast('Bot Token 不能为空', 'error')
     return
   }
 
   if (!/^\d+:[A-Za-z0-9_-]+$/.test(token)) {
-    store.showToast('Bot Token 格式不正确，应为 "数字:字符串" 格式', 'error')
+    toastStore.showToast('Bot Token 格式不正确，应为 "数字:字符串" 格式', 'error')
     return
   }
 
-  store.setBotToken(token)
-  store.showToast('Telegram Bot Token 保存成功！', 'success')
+  applicationStore.setBotToken(token)
+  toastStore.showToast('Telegram Bot Token 保存成功！', 'success')
 }
 
 const saveProxySettings = () => {
@@ -30,25 +30,25 @@ const saveProxySettings = () => {
     const url = proxyURLInput.value.trim()
 
     if (!url) {
-      store.showToast('启用代理时，代理地址不能为空', 'error')
+      toastStore.showToast('启用代理时，代理地址不能为空', 'error')
       return
     }
 
     try {
       new URL(url)
     } catch {
-      store.showToast('代理地址格式不正确，请输入有效的 URL', 'error')
+      toastStore.showToast('代理地址格式不正确，请输入有效的 URL', 'error')
       return
     }
   }
 
-  store.setProxySettings(proxyEnabled.value, proxyURLInput.value.trim())
-  store.showToast('代理设置保存成功！', 'success')
+  applicationStore.setProxySettings(proxyEnabled.value, proxyURLInput.value.trim())
+  toastStore.showToast('代理设置保存成功！', 'success')
 }
 
 const toggleProxy = () => {
   proxyEnabled.value = !proxyEnabled.value
-  store.setProxySettings(proxyEnabled.value, store.proxyURL)
+  applicationStore.setProxySettings(proxyEnabled.value, applicationStore.proxyURL)
 }
 </script>
 
