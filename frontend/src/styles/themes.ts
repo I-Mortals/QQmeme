@@ -1,6 +1,5 @@
 type BaseOptions = {
   base: string
-  fill: string
 }
 
 type StatusOptions = {

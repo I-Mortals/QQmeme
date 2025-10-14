@@ -304,12 +304,14 @@ const handleAlphaMouseDown = (event: MouseEvent): void => {
   document.addEventListener('mouseup', handleMouseUp)
 }
 
+// 监听外部值变化，更新内部状态
+watch(() => props.value, (newValue) => {
+  rgb.value = colorToRgb(newValue)
+  hsl.value = colorToHsl(newValue)
+  updateSliderPositions()
+}, { immediate: true })
+
 onMounted(() => {
-  const colorValue = props.value
-
-  rgb.value = colorToRgb(colorValue)
-  hsl.value = colorToHsl(colorValue)
-
   updateSliderPositions()
 })
 </script>

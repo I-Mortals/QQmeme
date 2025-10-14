@@ -1,88 +1,130 @@
 <script lang="ts" setup>
+import { computed, ref } from 'vue'
 import ThemeSwitch from '@/components/common/ThemeSwitch.vue';
+import SettingItem from './setting/SettingItem.vue'
+import SettingGroup from './setting/SettingGroup.vue'
+import SettingsSection from './setting/SettingsSection.vue'
+import ColorPicker from '@/components/ColorPicker.vue'
+import { themeStore } from '@/store/themeStore'
+import { type ThemeColorOptions } from '@/styles/themes'
+import { parseRgbStr } from '@/utils/color'
+import Button from '@/components/Button.vue'
 
+const themeVariables = [
+  { key: 'base1', label: '背景色', desc: '应用的主要背景颜色' },
+  { key: 'baseContent', label: '文本色', desc: '主要文本内容的颜色' },
+  { key: 'primary', label: '主色调', desc: '应用的主要强调色' },
+  { key: 'info', label: '信息色', desc: '信息提示的颜色' },
+  { key: 'success', label: '成功色', desc: '成功状态的颜色' },
+  { key: 'warning', label: '警告色', desc: '警告状态的颜色' },
+  { key: 'error', label: '错误色', desc: '错误状态的颜色' }
+] as const
+
+const customTheme = ref<Partial<ThemeColorOptions>>({})
+
+const currentThemeConfig = computed(() => {
+  return themeStore.getThemeConfig()
+})
+
+const keyToCssVar: Record<string, string> = {
+  base1: 'b1',
+  baseContent: 'bc',
+  primary: 'p',
+  info: 'i',
+  success: 's',
+  warning: 'w',
+  error: 'e'
+}
+
+const getThemeVariableValue = (key: string) => {
+  if (customTheme.value[key as keyof ThemeColorOptions]) {
+    return customTheme.value[key as keyof ThemeColorOptions]!
+  }
+  const config = currentThemeConfig.value
+  return config[key as keyof ThemeColorOptions] || '#000000'
+}
+
+const updateThemeVariable = (key: string, value: string) => {
+  customTheme.value = {
+    ...customTheme.value,
+    [key]: value
+  }
+
+  const cssVar = keyToCssVar[key]
+  if (cssVar) {
+    // 主题使用 rgb 如 --p: 0,102,255
+    const rgb = parseRgbStr(value)
+    document.documentElement.style.setProperty(`--${cssVar}`, rgb)
+  }
+}
+
+const resetThemeVariable = (key: string) => {
+  const originalValue = currentThemeConfig.value[key as keyof ThemeColorOptions]
+  if (originalValue) {
+    delete customTheme.value[key as keyof ThemeColorOptions]
+    updateThemeVariable(key, originalValue)
+  }
+}
+
+const resetAllCustomTheme = () => {
+  customTheme.value = {}
+  Object.values(keyToCssVar).forEach((cssVar) => {
+    document.documentElement.style.removeProperty(`--${cssVar}`)
+  })
+  themeStore.setTheme(themeStore.currentTheme)
+}
 </script>
 
 <template>
-  <div id="appearance-settings" class="content-section">
-    <h3 class="section-title">外观设置</h3>
-    <div class="setting-group">
-      <div class="setting-item">
-        <div class="setting-label">
-          <span class="label-text">主题方案</span>
-          <span class="label-desc">选择应用的主题配色方案</span>
-        </div>
-        <div class="setting-control theme-control">
-          <ThemeSwitch />
-        </div>
-      </div>
-    </div>
-  </div>
+  <SettingsSection title="外观设置" section-id="appearance-settings">
+    <SettingGroup>
+      <SettingItem>
+        <template #text>主题方案</template>
+        <template #desc>选择应用的主题配色方案</template>
+        <template #actions>
+          <div class="theme-control">
+            <ThemeSwitch />
+          </div>
+        </template>
+      </SettingItem>
+    </SettingGroup>
+
+
+    <SettingGroup>
+      <template #title>主题变量</template>
+      <template #desc>自定义当前主题的关键颜色变量</template>
+
+      <SettingItem v-for="item in themeVariables" :key="item.key">
+        <template #text>{{ item.label }}</template>
+        <template #desc>{{ item.desc }}</template>
+        <template #actions>
+          <div class="color-trigger">
+            <ColorPicker :value="getThemeVariableValue(item.key)"
+              @update:value="(val: string) => updateThemeVariable(item.key, val)">
+              <template #trigger="{ currentColor }">
+                <div class="color-preview-wrapper" :title="currentColor">
+                  <div class="color-preview" :style="{ backgroundColor: currentColor }" />
+                </div>
+              </template>
+            </ColorPicker>
+            <Button variant="primary" @click="resetThemeVariable(item.key)">重置</Button>
+          </div>
+        </template>
+      </SettingItem>
+
+      <SettingItem>
+        <template #actions>
+          <Button variant="primary" @click="resetAllCustomTheme">重置全部</Button>
+        </template>
+      </SettingItem>
+    </SettingGroup>
+  </SettingsSection>
 </template>
 
 <style lang="less" scoped>
 @import '@/styles/variables.less';
 
-.content-section {
-  margin-bottom: 1.5rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: @rgb-bc;
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid @rgb-b3;
-}
-
-.setting-group {
-  background: @rgb-b1;
-  border-radius: 0.5rem;
-  border: 1px solid @rgb-b3;
-  overflow: hidden;
-}
-
-.setting-item {
-  display: flex;
-  align-items: center;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid @rgb-b3;
-  position: relative;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.setting-label {
-  flex: 1;
-  min-width: 0;
-}
-
-.label-text {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: @rgb-bc;
-  margin-bottom: 0.25rem;
-}
-
-.label-desc {
-  display: block;
-  font-size: 0.75rem;
-  color: @rgb-bc;
-  opacity: 0.7;
-  line-height: 1.4;
-}
-
-.setting-control {
-  flex-shrink: 0;
-  margin-left: 1rem;
+.theme-control {
   display: flex;
   align-items: center;
   gap: .5rem;

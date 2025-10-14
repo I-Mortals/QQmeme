@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import Button from '@/components/Button.vue'
 import Input from '@/components/Input.vue'
 import { applicationStore, toastStore } from '@/store'
+import SettingItem from './setting/SettingItem.vue'
+import SettingsSection from './setting/SettingsSection.vue'
+import SettingGroup from './setting/SettingGroup.vue'
 
 const botTokenInput = ref(applicationStore.botToken)
 const proxyEnabled = ref(applicationStore.proxyEnabled)
@@ -53,134 +56,52 @@ const toggleProxy = () => {
 </script>
 
 <template>
-  <div class="content-section">
-    <h3 class="section-title">网络设置</h3>
-    <div class="setting-group">
-      <!-- Telegram 配置 -->
-      <div class="setting-item">
-        <div class="setting-label">
-          <span class="label-text">Telegram Bot Token</span>
-          <span class="label-desc">用于获取Telegram贴纸包的机器人Token</span>
-        </div>
-        <div class="setting-control">
-          <Input
-            v-model="botTokenInput"
-            type="text"
-            placeholder="请输入Bot Token"
-            class="config-input"
-          >
-            <template #append>
-              <Button variant="primary" @click="saveBotToken">
-                保存
-              </Button>
-            </template>
+  <SettingsSection title="网络设置">
+    <SettingGroup>
+      <SettingItem>
+        <template #text>Telegram Bot Token</template>
+        <template #desc>用于获取Telegram贴纸包的机器人Token</template>
+        <template #actions>
+          <Input v-model="botTokenInput" type="text" placeholder="请输入Bot Token" class="config-input">
+          <template #append>
+            <Button variant="primary" @click="saveBotToken">
+              保存
+            </Button>
+          </template>
           </Input>
-        </div>
-      </div>
-
-      <!-- 代理设置 -->
-      <div class="setting-item">
-        <div class="setting-label">
-          <span class="label-text">代理设置</span>
-          <span class="label-desc">配置网络代理以访问Telegram服务</span>
-        </div>
-        <div class="setting-control">
+        </template>
+      </SettingItem>
+      <SettingItem>
+        <template #text>代理设置</template>
+        <template #desc>配置网络代理以访问Telegram服务</template>
+        <template #actions>
           <div class="proxy-controls">
             <div class="toggle-switch" @click="toggleProxy">
               <div class="toggle-slider" :class="{ active: proxyEnabled }"></div>
             </div>
             <span class="toggle-label">{{ proxyEnabled ? '已启用' : '已禁用' }}</span>
           </div>
-        </div>
-      </div>
-
-      <div v-if="proxyEnabled" class="setting-item">
-        <div class="setting-label">
-          <span class="label-text">代理地址</span>
-          <span class="label-desc">代理服务器的完整地址</span>
-        </div>
-        <div class="setting-control">
-          <Input
-            v-model="proxyURLInput"
-            type="text"
-            placeholder="http://127.0.0.1:7890"
-            class="config-input"
-          >
-            <template #append>
-              <Button variant="primary" @click="saveProxySettings">
-                保存
-              </Button>
-            </template>
+        </template>
+      </SettingItem>
+      <SettingItem v-if="proxyEnabled">
+        <template #text>代理地址</template>
+        <template #desc>代理服务器的完整地址</template>
+        <template #actions>
+          <Input v-model="proxyURLInput" type="text" placeholder="http://127.0.0.1:7890" class="config-input">
+          <template #append>
+            <Button variant="primary" @click="saveProxySettings">
+              保存
+            </Button>
+          </template>
           </Input>
-        </div>
-      </div>
-    </div>
-  </div>
+        </template>
+      </SettingItem>
+    </SettingGroup>
+  </SettingsSection>
 </template>
 
 <style lang="less" scoped>
 @import '@/styles/variables.less';
-
-.content-section {
-  margin-bottom: 1.5rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: @rgb-bc;
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid @rgb-b3;
-}
-
-.setting-group {
-  background: @rgb-b1;
-  border-radius: 0.5rem;
-  border: 1px solid @rgb-b3;
-  overflow: hidden;
-}
-
-.setting-item {
-  display: flex;
-  align-items: center;
-  padding: 0.875rem 1.25rem;
-  border-bottom: 1px solid @rgb-b3;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.setting-label {
-  flex: 1;
-  min-width: 0;
-}
-
-.label-text {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: @rgb-bc;
-  margin-bottom: 0.25rem;
-}
-
-.label-desc {
-  display: block;
-  font-size: 0.75rem;
-  color: @rgb-bc;
-  opacity: 0.7;
-  line-height: 1.4;
-}
-
-.setting-control {
-  flex-shrink: 0;
-  margin-left: 1rem;
-}
 
 .config-input {
   min-width: 300px;
