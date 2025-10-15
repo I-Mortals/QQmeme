@@ -19,6 +19,25 @@ export type ThemeColorOptions = {
   [K in keyof StatusOptions as `${K}Content`]?: string
 }
 
+export type ThemeColorOptionsKey = keyof ThemeColorOptions
+
+export const variablesNameMap = {
+  base1: '--b1',
+  base2: '--b2',
+  base3: '--b3',
+  baseContent: '--bc',
+  primary: '--p',
+  primaryContent: '--pc',
+  info: '--i',
+  infoContent: '--ic',
+  success: '--s',
+  successContent: '--sc',
+  warning: '--w',
+  warningContent: '--wc',
+  error: '--e',
+  errorContent: '--ec'
+}
+
 export const defaultThemeConfig: ThemeColorOptions = {
   base1: '#FFFFFF',
   primary: '#0066FF',

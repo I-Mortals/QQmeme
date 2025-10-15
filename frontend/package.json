@@ -14,6 +14,7 @@
     "culori": "^4.0.2",
     "marked": "^16.4.0",
     "vue": "^3.2.37",
+    "vue-color-kit": "^1.0.6",
     "vue-draggable-plus": "^0.6.0"
   },
   "devDependencies": {

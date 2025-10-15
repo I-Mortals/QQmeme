@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useFloating, autoUpdate, offset, flip, shift, arrow, hide as hideMiddleware } from '@floating-ui/vue'
 import type { PopupProps, PopupEmits, PopupExpose } from './types'
 
@@ -87,29 +87,7 @@ const arrowStyles = computed(() => {
 })
 
 const customStyle = computed(() => {
-  const style: Record<string, any> = {}
-  
-  if (props.width) {
-    style.width = typeof props.width === 'number' ? `${props.width}px` : props.width
-  }
-  
-  if (props.height) {
-    style.height = typeof props.height === 'number' ? `${props.height}px` : props.height
-  }
-  
-  if (props.maxWidth) {
-    style.maxWidth = typeof props.maxWidth === 'number' ? `${props.maxWidth}px` : props.maxWidth
-  }
-  
-  if (props.maxHeight) {
-    style.maxHeight = typeof props.maxHeight === 'number' ? `${props.maxHeight}px` : props.maxHeight
-  }
-  
-  if (props.zIndex) {
-    style.zIndex = props.zIndex
-  }
-  
-  return style
+  return props.customStyle || {}
 })
 
 const customClass = computed(() => {
@@ -219,9 +197,6 @@ defineExpose<PopupExpose>({
   border: 1px solid @rgb-b3;
   color: @rgb-bc;
   pointer-events: auto;
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow: hidden;
   position: relative;
   z-index: 1000;
 

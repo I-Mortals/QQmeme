@@ -23,16 +23,6 @@ export interface PopupProps {
   className?: string
   /** 自定义样式 */
   customStyle?: Record<string, any>
-  /** 宽度 */
-  width?: number | string
-  /** 高度 */
-  height?: number | string
-  /** 最大宽度 */
-  maxWidth?: number | string
-  /** 最大高度 */
-  maxHeight?: number | string
-  /** z-index */
-  zIndex?: number
   /** 尺寸 */
   size?: 'small' | 'medium' | 'large'
 }
