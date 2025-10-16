@@ -30,6 +30,7 @@ const emit = defineEmits<{
   'keydown': [event: KeyboardEvent]
   'keyup': [event: KeyboardEvent]
   'clear': []
+  'click': [event: MouseEvent]
 }>()
 
 const slots = useSlots()
@@ -90,13 +91,17 @@ const handleClear = () => {
   inputValue.value = ''
   emit('clear')
 }
+
+const handleClick = (event: MouseEvent) => {
+  emit('click', event)
+}
 </script>
 
 <template>
   <div class="input-wrapper" :class="{
     'input-with-suffix': props.suffix || slots.suffix,
     'input-with-clear': showClearButton
-  }">
+  }" @click="handleClick">
     <!-- 外部前缀 -->
     <div v-if="hasPrepend" class="input-prepend">
       <span v-if="prepend" class="input-prepend-text">{{ prepend }}</span>
@@ -185,8 +190,7 @@ const handleClear = () => {
   color: @rgb-bc;
   transition: all 0.2s ease;
   outline: none;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
 
   &::placeholder {
     color: @rgb-bc;

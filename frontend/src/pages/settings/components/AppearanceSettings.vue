@@ -10,9 +10,9 @@ import {
   variablesNameMap,
   type ThemeColorOptions,
   ThemeColorOptionsKey,
-  getThemeColor,
+  getThemeColor
 } from '@/styles/themes'
-import { getInterpolateByContrast, parseRgbStrWithCSS } from '@/utils/color'
+import { getInterpolateByContrast, parseRgbStr, parseRgbStrWithCSS } from '@/utils/color'
 import Button from '@/components/Button.vue'
 import { formatHex } from 'culori'
 
@@ -30,7 +30,7 @@ const themeVariables = [
   { key: 'warning', label: '警告色', desc: '警告状态的颜色' },
   { key: 'warningContent', label: '文本色', desc: '警告状态的文本内容颜色' },
   { key: 'error', label: '错误色', desc: '错误状态的颜色' },
-  { key: 'errorContent', label: '文本色', desc: '错误状态的文本内容颜色'}
+  { key: 'errorContent', label: '文本色', desc: '错误状态的文本内容颜色' }
 ] as const
 
 const customTheme = ref<Partial<ThemeColorOptions>>({})
@@ -75,7 +75,7 @@ const updateThemeVariable = (key: ThemeColorOptionsKey, value: string) => {
   const cssVar = variablesNameMap[key]
   if (cssVar) {
     // 主题使用 rgb 如 --p: 0,102,255
-    const rgb = parseRgbStrWithCSS(value)
+    const rgb = parseRgbStr(value)
     document.documentElement.style.setProperty(`${cssVar}`, rgb)
   }
 }
@@ -84,6 +84,7 @@ const resetThemeVariable = (key: ThemeColorOptionsKey) => {
   // 删除自定义主题值，使用原始主题计算逻辑
   delete customTheme.value[key]
   const originalValue = getThemeVariableValue(key, false)
+
   updateThemeVariable(key, originalValue)
 }
 

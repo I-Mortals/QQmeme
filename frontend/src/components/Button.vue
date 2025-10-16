@@ -121,6 +121,11 @@ const handleClick = (event: MouseEvent) => {
   font-size: 0.875rem;
   min-height: 2rem;
 
+  .btn-content {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+  }
 
   &-disabled {
     opacity: 0.6;
@@ -154,11 +159,6 @@ const handleClick = (event: MouseEvent) => {
     &.btn-large {
       padding: 0.75rem;
     }
-  }
-
-  &-with-icon .btn-content {
-    display: flex;
-    align-items: center;
   }
 
   &-loading-spinner {

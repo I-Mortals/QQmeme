@@ -4,9 +4,14 @@
       ref="triggerRef"
       variant="primary"
       @click="toggleDropdown"
-      icon="tabler:category-filled"
     >
-      {{ currentTheme }}
+      <div class="theme-preview-grid" :style="{ backgroundColor: getThemeColor(currentTheme, 'base1') }">
+        <div class="preview-square" :style="{ backgroundColor: getThemeColor(currentTheme, 'baseContent') }"></div>
+        <div class="preview-square" :style="{ backgroundColor: getThemeColor(currentTheme, 'primary') }"></div>
+        <div class="preview-square" :style="{ backgroundColor: getThemeColor(currentTheme, 'warning') }"></div>
+        <div class="preview-square" :style="{ backgroundColor: getThemeColor(currentTheme, 'success') }"></div>
+      </div>
+      <span style="text-transform: capitalize;">{{ currentTheme }}</span>
     </Button>
 
     <Popup
@@ -26,7 +31,12 @@
           :class="{ active: theme === currentTheme }"
           @click="selectTheme(theme)"
         >
-          <div class="theme-preview" :style="{ backgroundColor: getThemeConfig(theme).base1 }"></div>
+          <div class="theme-preview-grid" :style="{ backgroundColor: getThemeColor(theme, 'base1') }">
+            <div class="preview-square" :style="{ backgroundColor: getThemeColor(theme, 'baseContent') }"></div>
+            <div class="preview-square" :style="{ backgroundColor: getThemeColor(theme, 'primary') }"></div>
+            <div class="preview-square" :style="{ backgroundColor: getThemeColor(theme, 'warning') }"></div>
+            <div class="preview-square" :style="{ backgroundColor: getThemeColor(theme, 'success') }"></div>
+          </div>
           <span class="theme-label">{{ theme }}</span>
         </div>
       </div>
@@ -39,6 +49,7 @@ import { ref, computed } from 'vue'
 import { themeStore } from '@/store'
 import { Popup } from '@/components/popup'
 import Button from '@/components/Button.vue'
+import { getThemeColor } from '@/styles/themes'
 
 const showDropdown = ref(false)
 const triggerRef = ref<HTMLElement>()
@@ -58,10 +69,6 @@ const selectTheme = (theme: string) => {
   themeStore.setTheme(theme)
   closeDropdown()
 }
-
-const getThemeConfig = (theme: string) => {
-  return themeStore.getThemeConfig(theme)
-}
 </script>
 
 <style lang="less" scoped>
@@ -77,6 +84,8 @@ const getThemeConfig = (theme: string) => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-height: 20rem;
+  overflow-y: auto;
 }
 
 .theme-item {
@@ -99,13 +108,28 @@ const getThemeConfig = (theme: string) => {
   }
 }
 
-.theme-preview {
+.theme-preview-grid {
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 0.25rem;
   border: 1px solid @rgb-b3;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: grid;
+  gap: .15rem;
+  padding: .15rem;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+}
+
+.preview-square {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 50%;
+  margin: 0;
+  padding: 0;
 }
 
 .theme-label {
