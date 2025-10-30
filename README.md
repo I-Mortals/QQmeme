@@ -2,6 +2,8 @@
 
 一个表情包管理桌面应用程序
 
+<img width="864" height="552" alt="QQ20251030-163640" src="https://github.com/user-attachments/assets/07db0cc2-c560-4056-9400-8850ce688a4a" />
+
 ## 🗂️ 表情包目录设置
 
 * 将程序放在英文文件夹下，例：`D:\QQmeme\`。
