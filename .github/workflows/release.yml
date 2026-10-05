@@ -1,0 +1,311 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '18'
+  WAILS_VERSION: v2.10.2
+  APP_NAME: QQmeme
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Linux (AppImage) - 两个 webkit 变体以覆盖两大系发行版
+  # ---------------------------------------------------------------------------
+  build-linux:
+    name: Linux AppImage (${{ matrix.suffix }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 运行目标：Ubuntu 22.04+ / Arch / SteamOS / Fedora / Debian 12（webkit2gtk-4.1）
+          - label: webkit2gtk-4.1
+            os: ubuntu-22.04
+            webkit_pkg: libwebkit2gtk-4.1-dev
+            wails_tags: webkit2_41
+            suffix: webkit2gtk-4.1
+          # 运行目标：Ubuntu 20.04/22.04、Debian 11/12（webkit2gtk-4.0）
+          - label: webkit2gtk-4.0
+            os: ubuntu-22.04
+            webkit_pkg: libwebkit2gtk-4.0-dev
+            wails_tags: ''
+            suffix: webkit2gtk-4.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            file \
+            wget \
+            libgtk-3-dev \
+            ${{ matrix.webkit_pkg }}
+          # libfuse2 is needed by appimagetool; Ubuntu 24.04 renamed it to libfuse2t64
+          sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse2t64
+
+      - name: Install Wails CLI
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build application
+        run: |
+          if [ -n "${{ matrix.wails_tags }}" ]; then
+            wails build -clean -tags "${{ matrix.wails_tags }}"
+          else
+            wails build -clean
+          fi
+          file build/bin/${APP_NAME}
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package AppImage
+        run: |
+          set -e
+          VERSION="${{ steps.version.outputs.version }}"
+          SUFFIX="${{ matrix.suffix }}"
+          OUT="${APP_NAME}-${VERSION}-x86_64-${SUFFIX}.AppImage"
+
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool
+          chmod +x /tmp/appimagetool
+
+          rm -rf AppDir
+          mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/512x512/apps
+          cp "build/bin/${APP_NAME}" "AppDir/usr/bin/${APP_NAME}"
+
+          cat > "AppDir/${APP_NAME}.desktop" <<EOF
+          [Desktop Entry]
+          Name=${APP_NAME}
+          Exec=${APP_NAME}
+          Icon=${APP_NAME}
+          Type=Application
+          Categories=Utility;Graphics;
+          Comment=表情包管理桌面应用
+          Terminal=false
+          EOF
+          cp "AppDir/${APP_NAME}.desktop" "AppDir/usr/share/applications/${APP_NAME}.desktop"
+
+          cp build/appicon.png "AppDir/${APP_NAME}.png"
+          cp "AppDir/${APP_NAME}.png" AppDir/.DirIcon
+          cp "AppDir/${APP_NAME}.png" "AppDir/usr/share/icons/hicolor/512x512/apps/${APP_NAME}.png"
+
+          cat > AppDir/AppRun <<'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          exec "${HERE}/usr/bin/QQmeme" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 /tmp/appimagetool AppDir "$OUT"
+          ls -lh "$OUT"
+          echo "ARTIFACT_NAME=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QQmeme-linux-${{ matrix.suffix }}
+          path: ${{ env.ARTIFACT_NAME }}
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Windows (portable zip)
+  # ---------------------------------------------------------------------------
+  build-windows:
+    name: Windows amd64
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        shell: pwsh
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+          echo "$(go env GOPATH)\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build application
+        shell: pwsh
+        run: |
+          wails build -clean -platform windows/amd64
+          Get-ChildItem build/bin
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $out = "${env:APP_NAME}-$version-windows-amd64.zip"
+          Compress-Archive -Path "build/bin/${env:APP_NAME}.exe" -DestinationPath $out
+          echo "ARTIFACT_NAME=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QQmeme-windows-amd64
+          path: ${{ env.ARTIFACT_NAME }}
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # macOS (universal: Intel + Apple Silicon)
+  # ---------------------------------------------------------------------------
+  build-macos:
+    name: macOS universal
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@${{ env.WAILS_VERSION }}
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build application
+        run: |
+          wails build -clean -platform darwin/universal
+          ls -R build/bin
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          OUT="${APP_NAME}-${VERSION}-macos-universal.zip"
+          # ditto 可以正确保留 .app 内的符号链接与资源
+          ditto -c -k --sequesterRsrc --keepParent "build/bin/${APP_NAME}.app" "$OUT"
+          ls -lh "$OUT"
+          echo "ARTIFACT_NAME=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QQmeme-macos-universal
+          path: ${{ env.ARTIFACT_NAME }}
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # 发布：仅在推送 v* tag 时创建 GitHub Release
+  # ---------------------------------------------------------------------------
+  release:
+    name: Publish release
+    needs: [build-linux, build-windows, build-macos]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List assets
+        run: ls -lh dist
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          body: |
+            ## QQmeme 发布
+
+            本次发布包含 Windows、macOS、Linux 三个平台的构建产物，请按需下载。
+
+            ### Windows
+            - `*-windows-amd64.zip`：解压后运行 `QQmeme.exe`（依赖系统 WebView2，Windows 10+ 通常已内置）。
+
+            ### macOS
+            - `*-macos-universal.zip`：同时支持 Intel 与 Apple Silicon。解压后拖入「应用程序」；首次打开若提示来源未知，请在「系统设置 → 隐私与安全性」中允许，或右键点击选择「打开」。
+
+            ### Linux
+            AppImage 未内置 WebKit，运行时依赖系统库，请根据发行版选择：
+
+            | 文件 | 适用发行版 |
+            | --- | --- |
+            | `*-webkit2gtk-4.1.AppImage` | Ubuntu 22.04+、Debian 12+、Arch、SteamOS、Fedora |
+            | `*-webkit2gtk-4.0.AppImage` | Ubuntu 20.04/22.04、Debian 11/12 |
+
+            如无法确定用哪个，运行 `pkg-config --modversion webkit2gtk-4.1`，能输出版本号就用 4.1，否则用 4.0。
+            需要「复制图片到剪贴板」功能时，请安装 `wl-clipboard`（Wayland）或 `xclip`（X11）。
+
+            ```bash
+            chmod +x QQmeme-*.AppImage
+            ./QQmeme-*.AppImage
+            ```
