@@ -1,0 +1,171 @@
+name: Build Linux AppImage
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-appimage:
+    name: AppImage (${{ matrix.suffix }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 运行目标：Ubuntu 22.04+ / Arch / SteamOS / Fedora / Debian 12（webkit2gtk-4.1）
+          - label: webkit2gtk-4.1
+            os: ubuntu-22.04
+            webkit_pkg: libwebkit2gtk-4.1-dev
+            wails_tags: webkit2_41
+            suffix: webkit2gtk-4.1
+          # 运行目标：Ubuntu 20.04/22.04、Debian 11/12（webkit2gtk-4.0）
+          - label: webkit2gtk-4.0
+            os: ubuntu-22.04
+            webkit_pkg: libwebkit2gtk-4.0-dev
+            wails_tags: ''
+            suffix: webkit2gtk-4.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go.sum
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            file \
+            wget \
+            libgtk-3-dev \
+            ${{ matrix.webkit_pkg }}
+          # libfuse2 is needed by appimagetool; Ubuntu 24.04 renamed it to libfuse2t64
+          sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse2t64
+
+      - name: Install Wails CLI
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Build application
+        run: |
+          if [ -n "${{ matrix.wails_tags }}" ]; then
+            wails build -clean -tags "${{ matrix.wails_tags }}"
+          else
+            wails build -clean
+          fi
+          file build/bin/QQmeme
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Package AppImage
+        run: |
+          set -e
+          APP_NAME=QQmeme
+          VERSION="${{ steps.version.outputs.version }}"
+          SUFFIX="${{ matrix.suffix }}"
+          OUT="${APP_NAME}-${VERSION}-x86_64-${SUFFIX}.AppImage"
+
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool
+          chmod +x /tmp/appimagetool
+
+          rm -rf AppDir
+          mkdir -p AppDir/usr/bin
+          cp "build/bin/${APP_NAME}" "AppDir/usr/bin/${APP_NAME}"
+
+          cat > "AppDir/${APP_NAME}.desktop" <<EOF
+          [Desktop Entry]
+          Name=${APP_NAME}
+          Exec=${APP_NAME}
+          Icon=${APP_NAME}
+          Type=Application
+          Categories=Utility;Graphics;
+          Comment=表情包管理桌面应用
+          Terminal=false
+          EOF
+          mkdir -p AppDir/usr/share/applications
+          cp "AppDir/${APP_NAME}.desktop" "AppDir/usr/share/applications/${APP_NAME}.desktop"
+
+          cp build/appicon.png "AppDir/${APP_NAME}.png"
+          cp "AppDir/${APP_NAME}.png" AppDir/.DirIcon
+          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
+          cp "AppDir/${APP_NAME}.png" "AppDir/usr/share/icons/hicolor/512x512/apps/${APP_NAME}.png"
+
+          cat > AppDir/AppRun <<'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          exec "${HERE}/usr/bin/QQmeme" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 /tmp/appimagetool AppDir "$OUT"
+          ls -lh "$OUT"
+          echo "APPIMAGE_NAME=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QQmeme-${{ matrix.suffix }}
+          path: ${{ env.APPIMAGE_NAME }}
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build-appimage
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download AppImages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.AppImage
+          body: |
+            ## Linux AppImage
+
+            请根据你的发行版选择对应的文件（两者都未内置 WebKit，运行时依赖系统库）：
+
+            | 文件 | 适用发行版 |
+            | --- | --- |
+            | `*-webkit2gtk-4.1.AppImage` | Ubuntu 22.04+、Debian 12+、Arch、SteamOS、Fedora |
+            | `*-webkit2gtk-4.0.AppImage` | Ubuntu 20.04/22.04、Debian 11/12 |
+
+            如无法确定，运行 `pkg-config --modversion webkit2gtk-4.1`，能输出版本号就用 4.1，否则用 4.0。
+
+            赋权后直接运行：
+
+            ```bash
+            chmod +x QQmeme-*.AppImage
+            ./QQmeme-*.AppImage
+            ```
