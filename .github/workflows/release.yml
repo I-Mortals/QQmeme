@@ -249,8 +249,17 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           OUT="${APP_NAME}-${VERSION}-macos-universal.zip"
+          # wails 的 .app 名称取自 wails.json 的 name（而非 outputfilename），
+          # 这里动态查找以避免硬编码名称导致的失败
+          APP_BUNDLE="$(find build/bin -maxdepth 1 -name '*.app' -print -quit)"
+          if [[ -z "$APP_BUNDLE" ]]; then
+            echo "未找到 .app 应用包" >&2
+            ls -R build/bin >&2
+            exit 1
+          fi
+          echo "Packaging: $APP_BUNDLE"
           # ditto 可以正确保留 .app 内的符号链接与资源
-          ditto -c -k --sequesterRsrc --keepParent "build/bin/${APP_NAME}.app" "$OUT"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$OUT"
           ls -lh "$OUT"
           echo "ARTIFACT_NAME=$OUT" >> "$GITHUB_ENV"
 
