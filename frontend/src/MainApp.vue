@@ -7,6 +7,7 @@ import UsageGuide from '@/pages/UsageGuide.vue'
 import type { TabItem } from '@/components/tab/types'
 import MemeLib from '@/pages/memelib/index.vue'
 import TelegramStickerPane from '@/pages/memes/TelegramStickerPane.vue'
+import About from '@/pages/About.vue'
 import ThemeSwitch from './components/common/ThemeSwitch.vue'
 
 const mainTabsConfig = [
@@ -39,6 +40,12 @@ const mainTabsConfig = [
     label: '表情包库',
     icon: '😀',
     component: MemeLib
+  },
+  {
+    key: 'about',
+    label: '关于',
+    icon: 'ℹ️',
+    component: About
   }
 ]
 
